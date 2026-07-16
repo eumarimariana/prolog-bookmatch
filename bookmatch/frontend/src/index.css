@@ -1,3 +1,64 @@
+/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --radius: 0.75rem;
+
+  /* Brand palette: Sable Green + Fire + Mango Tango + Dawn Pink + Alien Green */
+  --brand-purple: #036c17;        /* Sable Green (primary) */
+  --brand-purple-deep: #024a10;
+  --brand-brown: #ae4202;         /* Fire */
+  --brand-yellow: #e87305;        /* Mango Tango (warm accent) */
+  --brand-cream: #f2ecde;         /* Dawn Pink */
+  --brand-lime: #5fca00;          /* Alien Green */
+
+  /* System Colors */
+  --background: #f2ecde;
+  --foreground: #2a1a08;
+  --card: #faf5e9;
+  --card-foreground: #2a1a08;
+  --popover: #faf5e9;
+  --popover-foreground: #2a1a08;
+  --primary: #036c17;
+  --primary-foreground: #f2ecde;
+  --secondary: #ae4202;
+  --secondary-foreground: #f2ecde;
+  --muted: #e8dfc9;
+  --muted-foreground: #6b4a20;
+  --accent: #e87305;
+  --accent-foreground: #f2ecde;
+  --destructive: #ae4202;
+  --destructive-foreground: #f2ecde;
+  --border: #d9cfb5;
+  --input: #d9cfb5;
+  --ring: #036c17;
+  
+  /* Sidebar Colors (caso utilize os componentes de sidebar no futuro) */
+  --sidebar: #024a10;
+  --sidebar-foreground: #f2ecde;
+  --sidebar-primary: #5fca00;
+  --sidebar-primary-foreground: #024a10;
+  --sidebar-accent: #036c17;
+  --sidebar-accent-foreground: #f2ecde;
+  --sidebar-border: #036c17;
+  --sidebar-ring: #5fca00;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: "Fraunces", ui-serif, Georgia, serif;
+    letter-spacing: -0.02em;
+  }
+}
