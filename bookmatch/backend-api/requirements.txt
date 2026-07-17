@@ -3,4 +3,4 @@ uvicorn==0.28.0
 requests==2.31.0
 pyswip
 supabase
-python-dotenvS
+python-dotenv

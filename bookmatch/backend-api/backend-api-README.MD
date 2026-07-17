@@ -69,20 +69,6 @@ Recomenda livros por gênero.
 { "genre": "distopia" }
 ```
 
-### `POST /recommend/tropes`
-Recomenda livros que combinem dois tropos.
-
-```json
-{ "trope1": "monster_romance", "trope2": "friends_to_lovers" }
-```
-
-### `POST /recommend/similar`
-Recomenda livros similares a um título já lido (mesmo gênero).
-
-```json
-{ "title": "Jogos Vorazes" }
-```
-
 ## Testando a lógica Prolog isoladamente
 
 Sem precisar subir a API ou configurar o Supabase, dá pra testar as regras direto:
