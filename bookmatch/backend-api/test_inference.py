@@ -1,6 +1,5 @@
 from pyswip import Prolog
 from pathlib import Path
-import os
 
 prolog = Prolog()
 

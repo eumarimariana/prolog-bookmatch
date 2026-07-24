@@ -3,8 +3,13 @@ from pyswip import Prolog
 from supabase import create_client, Client
 from config import SUPABASE_URL, SUPABASE_KEY
 
-# Inicializa o cliente do Supabase e o Prolog
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# Só cria o client do Supabase se as credenciais estiverem configuradas.
+# Sem isso, a API ainda sobe, só fica sem dados até o .env ser corrigido.
+supabase: Client | None = None
+
+if SUPABASE_URL and SUPABASE_KEY:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)    
+
 prolog = Prolog()
 
 def escape_prolog_string(value: str):
@@ -17,6 +22,9 @@ def load_rules():
 
 def sync_supabase_to_prolog():
     """Procura os livros no Supabase e injeta-os como factos no Prolog"""
+    if supabase is None:
+        raise RuntimeError("Credenciais do Supabase não configuradas, sincronização pulada")
+
     print("Sincronizando dados do Supabase com o Prolog...")
     
     # Limpa factos dinâmicos antigos para evitar duplicados
