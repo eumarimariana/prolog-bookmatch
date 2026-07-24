@@ -24,3 +24,8 @@ app.add_middleware(
 )
 
 app.include_router(recommendations.router)
+
+# Para evitar o errp 404 ao acessar direto da raiz
+@app.get('/')
+async def root():
+    return {"status": "ok", "message": "BookMatch API está no ar"}
