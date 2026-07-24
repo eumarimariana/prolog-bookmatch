@@ -27,7 +27,7 @@ def sync_supabase_to_prolog():
 
     print("Sincronizando dados do Supabase com o Prolog...")
     
-    # Limpa factos dinâmicos antigos para evitar duplicados
+    # Limpa fatos dinâmicos antigos para evitar duplicados
     prolog.retractall("book(_, _)")
     prolog.retractall("has_genre(_, _)")
     prolog.retractall("has_trope(_, _)")
@@ -45,9 +45,11 @@ def sync_supabase_to_prolog():
         prolog.assertz(f"book('{book_id}', '{title}')")
         
         for genre in book.get("genres", []):
-            prolog.assertz(f"has_genre('{book_id}', '{genre}')")
+            genre_normalized = genre.strip().lower()
+            prolog.assertz(f"has_genre('{book_id}', '{genre_normalized}')")
             
         for trope in book.get("tropes", []):
-            prolog.assertz(f"has_trope('{book_id}', '{trope}')")
+            trope_normalized = trope.strip().lower()
+            prolog.assertz(f"has_trope('{book_id}', '{trope_normalized}')")
             
     print(f"Sincronização concluída com sucesso! {len(books)} livros carregados.")

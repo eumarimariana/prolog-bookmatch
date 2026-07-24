@@ -7,7 +7,7 @@ router = APIRouter(prefix="/recommend", tags=["recommendations"])
 
 @router.post("/genre")
 async def get_recommendation_by_genre(req: RecommendationRequest):
-    genre = escape_prolog_string(req.genre)
+    genre = escape_prolog_string(req.genre.strip().lower())
     query = f"recommend_by_genre('{genre}', Title)"
 
     try:
@@ -31,8 +31,8 @@ async def get_recommendation_by_similarity(req: SimilarRequest):
 
 @router.post("/tropes")
 async def get_recommendation_by_combined_tropes(req: CombinedTropesRequest):
-    trope1 = escape_prolog_string(req.trope1)
-    trope2 = escape_prolog_string(req.trope2)
+    trope1 = escape_prolog_string(req.trope1.strip().lower())
+    trope2 = escape_prolog_string(req.trope2.strip().lower())
     query = f"recommend_by_combined_tropes('{trope1}', '{trope2}', Title)"
 
     try:
