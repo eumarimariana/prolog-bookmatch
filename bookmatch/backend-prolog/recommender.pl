@@ -9,6 +9,11 @@ recommend_by_genre_raw(Genre, Title) :-
     has_genre(ID, Genre),
     book(ID, Title).
 
+% Recomendar por trope ou humor
+recommend_by_trope(Trope, Title) :-
+    has_trope(ID, Trope),
+    book(ID, Title).
+
 % Recomendar cruzando dois tropos diferentes
 recommend_by_combined_tropes_raw(Trope1, Trope2, Title) :-
     has_trope(ID, Trope1),

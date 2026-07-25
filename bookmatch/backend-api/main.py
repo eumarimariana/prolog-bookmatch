@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prolog_services import load_rules, sync_supabase_to_prolog
-from routers import recommendations
+from routers import recommendations, books, profiles
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,8 +24,10 @@ app.add_middleware(
 )
 
 app.include_router(recommendations.router)
+app.include_router(books.router)
+app.include_router(profiles.router)
 
-# Para evitar o errp 404 ao acessar direto da raiz
+# Para evitar o erro 404 ao acessar direto da raiz
 @app.get('/')
 async def root():
     return {"status": "ok", "message": "BookMatch API está no ar"}
