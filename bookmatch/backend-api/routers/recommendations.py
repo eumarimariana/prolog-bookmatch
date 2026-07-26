@@ -1,5 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from schemas import RecommendationRequest, SimilarRequest, CombinedTropesRequest, AdvancedRecommendationRequest
+from schemas import (
+    RecommendationRequest, SimilarRequest, CombinedTropesRequest, 
+    AdvancedRecommendationRequest, ScoreRequest, ExplainRequest, UserProfileRequest
+)
 from prolog_services import prolog, escape_prolog_string
 
 router = APIRouter(prefix="/recommend", tags=["recommendations"])
@@ -94,3 +97,52 @@ async def get_advanced_recommendation(req: AdvancedRecommendationRequest):
         "themes": req.themes,
         "recommendations": results
     }
+
+@router.post("/score")
+async def get_best_match_by_score(req: ScoreRequest):
+    title = escape_prolog_string(req.reference_title)
+    query = f"recommend_best_match('{title}', RecommendedTitle, Score)"
+    try:
+        results = [{"title": r["RecommendedTitle"], "score": r["Score"]} for r in prolog.query(query)]
+        return {"reference_title": req.reference_title, "recommendations": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro na inferência lógica: {str(e)}")
+
+@router.post("/user_profile")
+async def get_recommendation_for_user(req: UserProfileRequest):
+    # Setup temporary user facts
+    user_id = escape_prolog_string(req.user_id)
+    
+    try:
+        for g in req.liked_genres:
+            prolog.assertz(f"user_likes_genre('{user_id}', '{escape_prolog_string(g.lower())}')")
+        for t in req.liked_tropes:
+            prolog.assertz(f"user_likes_trope('{user_id}', '{escape_prolog_string(t.lower())}')")
+        for dt in req.disliked_tropes:
+            prolog.assertz(f"user_dislikes_trope('{user_id}', '{escape_prolog_string(dt.lower())}')")
+        for b in req.read_books:
+            prolog.assertz(f"user_read('{user_id}', '{escape_prolog_string(b)}')")
+            
+        query = f"recommend_for_user('{user_id}', Title)"
+        results = [r["Title"] for r in prolog.query(query)]
+        
+        # Cleanup temporary user facts (in a real system you'd manage this differently or keep it if it's cached)
+        prolog.retractall(f"user_likes_genre('{user_id}', _)")
+        prolog.retractall(f"user_likes_trope('{user_id}', _)")
+        prolog.retractall(f"user_dislikes_trope('{user_id}', _)")
+        prolog.retractall(f"user_read('{user_id}', _)")
+        
+        return {"user_id": req.user_id, "recommendations": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro na inferência lógica: {str(e)}")
+
+@router.post("/explain")
+async def explain_recommendation(req: ExplainRequest):
+    genre = escape_prolog_string(req.genre.lower())
+    trope = escape_prolog_string(req.trope.lower())
+    query = f"recommend_with_reason('{genre}', '{trope}', Title, Reason)"
+    try:
+        results = [{"title": r["Title"], "reason": r["Reason"]} for r in prolog.query(query)]
+        return {"genre": req.genre, "trope": req.trope, "recommendations": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro na inferência lógica: {str(e)}")

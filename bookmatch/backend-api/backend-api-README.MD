@@ -69,6 +69,38 @@ Recomenda livros baseando-se estritamente num gênero lógico.
 { "genre": "distopia" }
 ```
 
+### `POST /recommend/score`
+Calcula uma pontuação de similaridade (Scoring) entre um livro de referência e o restante da base de dados, retornando o livro que mais se aproxima através do cruzamento de pesos (Gênero=10, Trope=5).
+
+```json
+{
+  "reference_title": "O Senhor dos Anéis"
+}
+```
+
+### `POST /recommend/user_profile`
+Utiliza Filtragem Baseada em Conteúdo. Injeta dinamicamente os gostos e aversões do usuário no motor lógico em tempo de execução, para recomendar um livro que seja a "cara" do usuário, ignorando livros que ele já leu e tropos que não gosta.
+
+```json
+{
+  "user_id": "usr_123",
+  "liked_genres": ["fantasy", "sci-fi"],
+  "liked_tropes": ["found family", "chosen one"],
+  "disliked_tropes": ["love triangle"],
+  "read_books": ["book_id_1"]
+}
+```
+
+### `POST /recommend/explain`
+Retorna a recomendação acoplada ao motivo escrito pelo motor lógico (Explainable AI - XAI).
+
+```json
+{
+  "genre": "fantasy",
+  "trope": "enemies to lovers"
+}
+```
+
 ### `POST /recommend/advanced`
 Cruza múltiplos critérios (temas, humores e prompt textual) injetando heurísticas dinâmicas no Prolog para achar títulos mais específicos.
 
