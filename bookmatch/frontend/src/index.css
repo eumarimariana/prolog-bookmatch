@@ -1,129 +1,174 @@
-/* src/index.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
 :root {
-  --radius: 0.75rem;
-
-  /* Brand palette: Vivid Lilás/Purple + Cocoa Brown + Bright Yellow + Warm Cream */
-  --brand-purple: #9333ea;        /* Vivid Lilás/Magenta Purple */
-  --brand-purple-deep: #5b21b6;   /* Deep Purple */
-  --brand-brown: #6b3a19;         /* Cocoa Brown */
-  --brand-yellow: #facc15;        /* Bright Vivid Yellow */
-  --brand-cream: #f7f1e5;         /* Warm Cream/Beige */
-  --brand-lime: #c084fc;          /* Soft Lilac */
-  --brand-purple-light: #f3e8ff;  /* Light Purple tint */
-
-  /* System Colors */
-  --background: #f7f1e5;
-  --foreground: #4a2c11;
-  --card: #ffffff;
-  --card-foreground: #4a2c11;
-  --popover: #ffffff;
-  --popover-foreground: #4a2c11;
-  --primary: #9333ea;
-  --primary-foreground: #ffffff;
-  --secondary: #6b3a19;
-  --secondary-foreground: #ffffff;
-  --muted: #f3e8ff;
-  --muted-foreground: #7e22ce;
-  --accent: #facc15;
-  --accent-foreground: #3b0764;
-  --destructive: #b45309;
-  --destructive-foreground: #ffffff;
-  --border: #e8dccb;
-  --input: #e8dccb;
-  --ring: #9333ea;
-  
-  /* Sidebar Colors */
-  --sidebar: #4c1d95;
-  --sidebar-foreground: #faf5ff;
-  --sidebar-primary: #eab308;
-  --sidebar-primary-foreground: #1e1b4b;
-  --sidebar-accent: #7c3aed;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #5b21b6;
-  --sidebar-ring: #eab308;
+  --primary-purple: #7C3AED;
+  --primary-yellow: #FACC15;
+  --bg-color: #FAFAFA;
+  --text-dark: #2D3748;
+  --text-light: #718096;
+  --surface-white: rgba(255, 255, 255, 0.9);
 }
 
-@layer base {
-  * {
-    border-color: var(--border);
-  }
-
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
-  }
-
-  h1, h2, h3, h4 {
-    font-family: "Fraunces", ui-serif, Georgia, serif;
-    letter-spacing: -0.02em;
-  }
-
-  html {
-    scroll-behavior: smooth;
-  }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@layer utilities {
-  @keyframes fade-in-up {
-    from {
-      opacity: 0;
-      transform: translateY(16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-dark);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
 
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0px) rotate(0deg);
-    }
-    50% {
-      transform: translateY(-8px) rotate(1deg);
-    }
-  }
+/* Glassmorphism containers */
+.glass-panel {
+  background: var(--surface-white);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.05);
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
 
-  @keyframes pulse-glow {
-    0%, 100% {
-      opacity: 0.35;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.65;
-      transform: scale(1.08);
-    }
-  }
+.glass-panel:hover {
+  box-shadow: 0 12px 48px rgba(124, 58, 237, 0.1);
+  transform: translateY(-2px);
+}
 
-  @keyframes scale-in {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
+/* Typography */
+h1, h2, h3 {
+  font-weight: 700;
+  color: var(--primary-purple);
+  margin-bottom: 1rem;
+}
 
-  .animate-fade-in-up {
-    animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
+h1 {
+  font-size: 2.5rem;
+  line-height: 1.2;
+}
 
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
+p {
+  color: var(--text-light);
+  margin-bottom: 1rem;
+}
 
-  .animate-pulse-glow {
-    animation: pulse-glow 4s ease-in-out infinite;
-  }
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-  .animate-scale-in {
-    animation: scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-purple), #9333EA);
+  color: white;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+}
+
+.btn-primary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+}
+
+.btn-secondary {
+  background: var(--primary-yellow);
+  color: #574606;
+}
+
+.btn-secondary:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+/* Grid & Layout Utilities */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.grid-cols-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+
+/* Minimalist Form Elements */
+input, select, textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--text-dark);
+  transition: all 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary-purple);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade {
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Book Card */
+.book-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  height: 100%;
+}
+
+.book-card img {
+  width: 100%;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.3s;
+}
+
+.book-card:hover img {
+  transform: scale(1.03);
+}
+
+.badge {
+  display: inline-block;
+  background: rgba(250, 204, 21, 0.2);
+  color: #A16207;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
 }
