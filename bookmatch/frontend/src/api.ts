@@ -35,3 +35,19 @@ export async function recommendWithExplanation(genre: string, trope: string) {
   if (!res.ok) throw new Error("Erro na API");
   return res.json();
 }
+
+export async function searchOpenLibrary(query: string) {
+  const res = await fetch(`${API_URL}/books/openlibrary/search?q=${encodeURIComponent(query)}`);
+  if (!res.ok) throw new Error("Erro ao buscar livros na Open Library");
+  return res.json();
+}
+
+export async function importBookToProlog(book: { title: string; author: string; cover_url?: string; genres?: string[], tropes?: string[] }) {
+  const res = await fetch(`${API_URL}/books/import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(book),
+  });
+  if (!res.ok) throw new Error("Erro ao importar livro");
+  return res.json();
+}
