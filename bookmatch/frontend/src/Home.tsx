@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { recommendForUserProfile, recommendWithExplanation } from './api';
 import { Sparkles, Bot, Loader2, BookOpen, BrainCircuit } from 'lucide-react';
+import { supabase } from './lib/supabase';
+
+const MOCK_USER_ID = '11111111-1111-1111-1111-111111111111';
 
 export default function Home() {
   const [genre, setGenre] = useState('');
@@ -11,15 +14,59 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'profile' | 'explain'>('profile');
   const [hasSearched, setHasSearched] = useState(false);
+  
+  // Perfil original carregado do banco
+  const [profileData, setProfileData] = useState<{ genres: string[], tropes: string[] } | null>(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', MOCK_USER_ID)
+          .single();
+        
+        let loadedGenres: string[] = [];
+        let loadedTropes: string[] = [];
+        
+        if (data && !error) {
+          loadedGenres = data.liked_genres || [];
+          loadedTropes = data.liked_tropes || [];
+        } else {
+          // Fallback
+          const local = localStorage.getItem('localProfile');
+          if (local) {
+            const p = JSON.parse(local);
+            loadedGenres = p.genres || [];
+            loadedTropes = p.tropes || [];
+          }
+        }
+        
+        if (loadedGenres.length > 0) {
+          setProfileData({ genres: loadedGenres, tropes: loadedTropes });
+          setGenre(loadedGenres[0] || '');
+          setTrope(loadedTropes[0] || '');
+        }
+      } catch (e) {
+        console.error("Erro ao carregar perfil para prefill", e);
+      }
+    }
+    loadProfile();
+  }, []);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (!genre) return;
+    if (!genre && mode === 'explain') return; // XAI precisa de genero, Perfil pode usar o que ja ta salvo
     setLoading(true);
     setHasSearched(true);
     try {
       if (mode === 'profile') {
-        const data = await recommendForUserProfile("usr_1", [genre], trope ? [trope] : []);
+        // Usa o perfil carregado se os inputs estiverem vazios, ou usa os inputs do usuario
+        const requestGenres = genre ? [genre] : (profileData?.genres || []);
+        const requestTropes = trope ? [trope] : (profileData?.tropes || []);
+        
+        const data = await recommendForUserProfile(MOCK_USER_ID, requestGenres, requestTropes);
         setResults(data.recommendations.map((t: string) => ({ title: t })));
       } else {
         const data = await recommendWithExplanation(genre, trope || "fantasia"); // Trope default fallback
@@ -81,13 +128,13 @@ export default function Home() {
           <form onSubmit={handleSearch} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div className="grid grid-cols-2" style={{ gap: '2rem' }}>
               <div className="input-group">
-                <label>Gênero Favorito *</label>
+                <label>Gênero Favorito {mode === 'explain' ? '*' : '(Sobrescrever Perfil)'}</label>
                 <input 
                   type="text" 
                   placeholder="Ex: Romance, Fantasia, Distopia" 
                   value={genre} 
                   onChange={e => setGenre(e.target.value)}
-                  required
+                  required={mode === 'explain'}
                 />
               </div>
               <div className="input-group">

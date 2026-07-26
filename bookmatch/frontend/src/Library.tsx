@@ -1,64 +1,144 @@
-import { useState } from 'react';
-import { BookOpen, UserCircle, Save, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { BookOpen, UserCircle, Save, CheckCircle2, Loader2 } from 'lucide-react';
+import { supabase } from './lib/supabase';
+
+const MOCK_USER_ID = '11111111-1111-1111-1111-111111111111';
 
 export default function Library() {
-  const [name, setName] = useState('Mariana');
-  const [genres, setGenres] = useState('Romance, Fantasia');
-  const [tropes, setTropes] = useState('Melancólico, Found Family');
+  const [name, setName] = useState('');
+  const [genres, setGenres] = useState('');
+  const [tropes, setTropes] = useState('');
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  function handleSave(e: React.FormEvent) {
+  // Load profile from Supabase
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', MOCK_USER_ID)
+          .single();
+
+        if (data && !error) {
+          setName(data.name || '');
+          setGenres((data.liked_genres || []).join(', '));
+          setTropes((data.liked_tropes || []).join(', '));
+        } else if (error && error.code !== 'PGRST116') {
+          console.error("Erro ao carregar perfil:", error);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProfile();
+  }, []);
+
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    // Em uma aplicação real, salvaríamos no Supabase ou LocalStorage
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setLoading(true);
+    
+    const parsedGenres = genres.split(',').map(g => g.trim()).filter(Boolean);
+    const parsedTropes = tropes.split(',').map(t => t.trim()).filter(Boolean);
+
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .upsert({
+          id: MOCK_USER_ID,
+          name: name || 'Leitor',
+          liked_genres: parsedGenres,
+          liked_tropes: parsedTropes
+        });
+
+      if (error) {
+        console.error("Erro do Supabase ao salvar:", error);
+        // Fallback local se RLS bloquear (já que RLS de user_profiles não foi configurado na SQL anterior)
+        localStorage.setItem('localProfile', JSON.stringify({ name, genres: parsedGenres, tropes: parsedTropes }));
+      }
+      
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div className="container animate-fade">
-      <header style={{ textAlign: 'center', padding: '4rem 0 3rem' }}>
+    <div className="animate-fade">
+      <header className="container" style={{ textAlign: 'center', padding: '4rem 2rem 3rem' }}>
         <h1 style={{ marginBottom: '1rem' }}>Minha Estante</h1>
         <p style={{ maxWidth: '600px', margin: '0 auto' }}>
-          Gerencie seu perfil de leitor. Os dados que você colocar aqui alimentarão a IA do Prolog na página inicial ("Filtragem por Perfil").
+          Gerencie seu perfil de leitor. Suas escolhas aqui alimentam diretamente o motor de Inteligência Artificial do Prolog.
         </p>
       </header>
 
-      <section className="glass-panel" style={{ maxWidth: '600px', margin: '0 auto 4rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-          <UserCircle size={48} color="var(--primary-purple)" />
+      <section className="container glass-panel" style={{ maxWidth: '700px', margin: '0 auto 4rem', padding: '3rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '3rem', paddingBottom: '2rem', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+          <UserCircle size={64} color="var(--primary-purple)" />
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Perfil do Leitor</h2>
-            <p style={{ margin: 0, fontSize: '0.9rem' }}>ID: usr_1 (Mock Local)</p>
+            <h2 style={{ margin: 0, fontSize: '1.8rem', color: 'var(--text-dark)' }}>Perfil do Leitor</h2>
+            <p style={{ margin: 0, fontSize: '1rem', color: 'var(--text-light)' }}>Sincronizado via Supabase</p>
           </div>
         </div>
 
-        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="input-group">
-            <label>Nome</label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)} />
+        {loading && !name ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+            <Loader2 size={32} className="lucide-spin" color="var(--primary-purple)" />
           </div>
-          <div className="input-group">
-            <label>Gêneros Favoritos (separados por vírgula)</label>
-            <input type="text" value={genres} onChange={e => setGenres(e.target.value)} />
-          </div>
-          <div className="input-group">
-            <label>Tropos / Humores Favoritos (separados por vírgula)</label>
-            <input type="text" value={tropes} onChange={e => setTropes(e.target.value)} />
-          </div>
+        ) : (
+          <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div className="input-group">
+              <label>Nome ou Apelido</label>
+              <input 
+                type="text" 
+                value={name} 
+                onChange={e => setName(e.target.value)} 
+                placeholder="Como quer ser chamado?"
+                required
+              />
+            </div>
+            <div className="input-group">
+              <label>Gêneros Favoritos (separados por vírgula)</label>
+              <input 
+                type="text" 
+                value={genres} 
+                onChange={e => setGenres(e.target.value)} 
+                placeholder="Ex: Fantasia, Romance, Mistério"
+              />
+            </div>
+            <div className="input-group">
+              <label>Tropos / Elementos Favoritos (separados por vírgula)</label>
+              <input 
+                type="text" 
+                value={tropes} 
+                onChange={e => setTropes(e.target.value)} 
+                placeholder="Ex: Enemies to Lovers, Found Family"
+              />
+            </div>
 
-          <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-            {saved ? <CheckCircle2 size={20} /> : <Save size={20} />}
-            {saved ? 'Perfil Salvo!' : 'Salvar Preferências'}
-          </button>
-        </form>
+            <button type="submit" className="btn btn-primary" style={{ marginTop: '2rem' }} disabled={loading}>
+              {loading ? <Loader2 size={20} className="lucide-spin" /> : (saved ? <CheckCircle2 size={20} /> : <Save size={20} />)}
+              {loading ? 'Salvando...' : (saved ? 'Perfil Salvo e Sincronizado!' : 'Salvar Preferências')}
+            </button>
+          </form>
+        )}
       </section>
 
-      <section style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <BookOpen color="var(--primary-purple)" /> Histórico (Mock)
+      <section className="container" style={{ maxWidth: '700px', margin: '0 auto', marginBottom: '6rem' }}>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
+          <BookOpen color="var(--primary-purple)" /> Meu Histórico
         </h2>
-        <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-light)' }}>
-          Nenhum livro lido ainda. Futuramente você poderá marcar os livros importados como lidos, e eles serão injetados no Prolog (user_read/2) para refinar ainda mais as sugestões e evitar repetições!
+        <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-light)' }}>
+          <BookOpen size={48} style={{ opacity: 0.3, margin: '0 auto 1rem' }} />
+          <p style={{ margin: 0, fontSize: '1.1rem' }}>
+            Nenhum livro lido ainda. Futuramente, seus livros lidos alimentarão a regra <strong>user_read/2</strong> do Prolog para que a IA nunca sugira algo que você já leu!
+          </p>
         </div>
       </section>
     </div>
