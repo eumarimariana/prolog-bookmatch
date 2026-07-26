@@ -41,8 +41,8 @@ function Sidebar() {
 }
 
 function AIChat() {
-  const [messages, setMessages] = useState<{sender: 'bot'|'user', text: string}[]>([
-    { sender: 'bot', text: 'Good Day! I am your Prolog AI Assistant. Ask me to recommend a book by genre and trope!' }
+  const [messages, setMessages] = useState<{sender: 'bot'|'user', text: string, recommendations?: string[]}[]>([
+    { sender: 'bot', text: 'Olá! Sou sua IA baseada em Prolog. Diga-me o que você quer ler e eu filtrarei o banco de dados para você!' }
   ]);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -65,17 +65,16 @@ function AIChat() {
     try {
       const data = await recommendAdvanced(currentInput);
       if (data.recommendations && data.recommendations.length > 0) {
-        // Recommend up to 3 books
-        const recs = data.recommendations.slice(0, 3).map((r: string) => `"${r}"`).join(', ');
         setMessages(prev => [...prev, { 
           sender: 'bot', 
-          text: `Based on your request, I recommend: ${recs}. Would you like to know more about any of them?` 
+          text: `Encontrei algumas opções excelentes usando as regras lógicas do Prolog:`,
+          recommendations: data.recommendations.slice(0, 3)
         }]);
       } else {
-        setMessages(prev => [...prev, { sender: 'bot', text: 'Hmm, the Prolog engine did not find a match for those exact terms.' }]);
+        setMessages(prev => [...prev, { sender: 'bot', text: 'Hmm, o motor Prolog não encontrou combinações exatas para esses termos.' }]);
       }
     } catch (err) {
-      setMessages(prev => [...prev, { sender: 'bot', text: 'Sorry, my logic engine is currently unavailable.' }]);
+      setMessages(prev => [...prev, { sender: 'bot', text: 'Desculpe, meu motor lógico não está respondendo no momento.' }]);
     }
   }
 
@@ -100,6 +99,15 @@ function AIChat() {
         {messages.map((msg, i) => (
           <div key={i} className={`chat-bubble ${msg.sender}`}>
             {msg.text}
+            {msg.recommendations && msg.recommendations.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+                {msg.recommendations.map((r, idx) => (
+                  <Link key={idx} to={`/book/${encodeURIComponent(r)}`} style={{ background: msg.sender === 'bot' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.05)', color: msg.sender === 'bot' ? 'white' : 'inherit', padding: '8px 12px', borderRadius: '8px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600, border: msg.sender === 'bot' ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(0,0,0,0.1)' }}>
+                    📚 {r}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         ))}
         <div ref={messagesEndRef} />
