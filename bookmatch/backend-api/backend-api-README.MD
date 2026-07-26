@@ -100,7 +100,6 @@ Retorna a recomendação acoplada ao motivo escrito pelo motor lógico (Explaina
   "trope": "enemies to lovers"
 }
 ```
-
 ### `POST /recommend/advanced`
 Cruza múltiplos critérios (temas, humores e prompt textual) injetando heurísticas dinâmicas no Prolog para achar títulos mais específicos.
 
