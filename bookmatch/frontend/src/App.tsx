@@ -102,7 +102,7 @@ function AIChat() {
             {msg.recommendations && msg.recommendations.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
                 {msg.recommendations.map((r, idx) => (
-                  <Link key={idx} to={`/book/${encodeURIComponent(r)}`} style={{ background: msg.sender === 'bot' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.05)', color: msg.sender === 'bot' ? 'white' : 'inherit', padding: '8px 12px', borderRadius: '8px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600, border: msg.sender === 'bot' ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(0,0,0,0.1)' }}>
+                  <Link key={idx} to={`/book/${encodeURIComponent(r)}`} style={{ background: '#F3EFE9', color: 'var(--accent-purple)', padding: '8px 12px', borderRadius: '8px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700, border: '1px solid #EBE5DF', display: 'block', width: '100%' }}>
                     📚 {r}
                   </Link>
                 ))}

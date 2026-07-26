@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { searchOpenLibrary, importBookToProlog, recommendAdvanced, API_URL } from './api';
 import { Search as SearchIcon, Loader2, PlusCircle, CheckCircle2 } from 'lucide-react';
 import { supabase } from './lib/supabase';
+import { Link } from 'react-router-dom';
 
 export default function Search() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [importingState, setImportingState] = useState<Record<string, 'importing' | 'done' | 'error'>>({});
-  const [filterMode, setFilterMode] = useState<'openlibrary' | 'prolog'>('openlibrary');
+  const [filterMode, setFilterMode] = useState<'openlibrary' | 'prolog' | 'openlibrary_rec'>('openlibrary');
   const [genreFilter, setGenreFilter] = useState('');
   const [tropeFilter, setTropeFilter] = useState('');
   const [prologResults, setPrologResults] = useState<string[]>([]);
@@ -37,6 +38,30 @@ export default function Search() {
               }
             });
 
+            setImportingState(newImportState);
+          } else {
+            setImportingState({});
+          }
+        }
+        setResults(fetchedBooks);
+        setPrologResults([]);
+      } else if (filterMode === 'openlibrary_rec') {
+        const combinedQuery = `${query} ${genreFilter} ${tropeFilter}`.trim();
+        const data = await searchOpenLibrary(combinedQuery);
+        const fetchedBooks = data.books || [];
+
+        if (fetchedBooks.length > 0) {
+          const titles = fetchedBooks.map((b: any) => b.title);
+          const { data: existingBooks } = await supabase.from('books').select('title').in('title', titles);
+
+          if (existingBooks && existingBooks.length > 0) {
+            const existingTitles = existingBooks.map((b: any) => b.title);
+            const newImportState: Record<string, 'importing' | 'done' | 'error'> = {};
+            fetchedBooks.forEach((b: any) => {
+              if (existingTitles.includes(b.title)) {
+                newImportState[b.open_library_key] = 'done';
+              }
+            });
             setImportingState(newImportState);
           } else {
             setImportingState({});
@@ -96,12 +121,18 @@ export default function Search() {
       </header>
 
       <section style={{ marginBottom: '40px' }}>
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
           <button 
             onClick={() => setFilterMode('openlibrary')}
             style={{ padding: '8px 16px', borderRadius: '99px', border: 'none', background: filterMode === 'openlibrary' ? 'var(--accent-purple)' : '#F9F8F6', color: filterMode === 'openlibrary' ? 'white' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600 }}
           >
-            Pesquisa via API (Global)
+            Pesquisa Livre (Global)
+          </button>
+          <button 
+            onClick={() => setFilterMode('openlibrary_rec')}
+            style={{ padding: '8px 16px', borderRadius: '99px', border: 'none', background: filterMode === 'openlibrary_rec' ? 'var(--accent-purple)' : '#F9F8F6', color: filterMode === 'openlibrary_rec' ? 'white' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600 }}
+          >
+            Recomendações API (Global)
           </button>
           <button 
             onClick={() => setFilterMode('prolog')}
@@ -127,7 +158,7 @@ export default function Search() {
             )}
           </div>
           
-          {filterMode === 'prolog' && (
+          {(filterMode === 'prolog' || filterMode === 'openlibrary_rec') && (
             <div style={{ display: 'flex', gap: '10px' }}>
               <input 
                 type="text" 
@@ -154,10 +185,12 @@ export default function Search() {
       {prologResults.length > 0 && (
         <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
           {prologResults.map((title, i) => (
-            <div key={i} style={{ padding: '20px', background: '#F9F8F6', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <div style={{ width: '40px', height: '40px', background: 'var(--accent-purple)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>📚</div>
-              <h3 style={{ fontSize: '1.2rem', margin: 0, color: 'var(--text-dark)' }}>{title}</h3>
-            </div>
+            <Link to={`/book/${encodeURIComponent(title)}`} key={i} style={{ textDecoration: 'none' }}>
+              <div style={{ padding: '20px', background: '#F9F8F6', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', border: '1px solid #EBE5DF' }}>
+                <div style={{ width: '40px', height: '40px', background: 'var(--accent-purple)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>📚</div>
+                <h3 style={{ fontSize: '1.2rem', margin: 0, color: 'var(--text-dark)' }}>{title}</h3>
+              </div>
+            </Link>
           ))}
         </section>
       )}

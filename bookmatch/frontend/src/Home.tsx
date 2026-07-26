@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
-import { Search, Bookmark, ChevronLeft, ChevronRight, Eye, BookmarkPlus, BookmarkCheck, Library, Smartphone, Sparkles, Crown, Headphones, Rocket, Heart, Flame, Ghost, ShieldAlert } from 'lucide-react';
+import { Search, Bookmark, ChevronLeft, ChevronRight, Eye, BookmarkPlus, BookmarkCheck, Library, Smartphone, Sparkles, Crown, Headphones, Rocket, Heart, Flame, Ghost, ShieldAlert, Puzzle, Landmark, Telescope, Loader2 } from 'lucide-react';
 import { searchOpenLibrary, importBookToProlog } from './api';
 
 const MOCK_USER_ID = '11111111-1111-1111-1111-111111111111';
@@ -11,36 +11,46 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [readBooks, setReadBooks] = useState<string[]>([]);
   const [addingState, setAddingState] = useState<Record<string, 'importing' | 'done' | 'error'>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loadingPage, setLoadingPage] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    async function init() {
-      try {
-        const data = await searchOpenLibrary('popular', 1);
-        const fetchedBooks = data.books || [];
+  async function fetchPage(page: number) {
+    if (page < 1) return;
+    setLoadingPage(true);
+    try {
+      const data = await searchOpenLibrary('popular', page);
+      const fetchedBooks = data.books || [];
+      
+      if (fetchedBooks.length > 0) {
+        const titles = fetchedBooks.map((b: any) => b.title);
+        const { data: existingBooks } = await supabase.from('books').select('title, id').in('title', titles);
         
-        if (fetchedBooks.length > 0) {
-          const titles = fetchedBooks.map((b: any) => b.title);
-          const { data: existingBooks } = await supabase.from('books').select('title, id').in('title', titles);
-          
-          if (existingBooks && existingBooks.length > 0) {
-            const existingTitles = existingBooks.map((b: any) => b.title);
-            const newImportState: Record<string, 'importing' | 'done' | 'error'> = {};
-            fetchedBooks.forEach((b: any) => {
-              if (existingTitles.includes(b.title)) {
-                newImportState[b.open_library_key] = 'done';
-              }
-            });
-            setAddingState(newImportState);
-          }
+        if (existingBooks && existingBooks.length > 0) {
+          const existingTitles = existingBooks.map((b: any) => b.title);
+          const newImportState: Record<string, 'importing' | 'done' | 'error'> = {};
+          fetchedBooks.forEach((b: any) => {
+            if (existingTitles.includes(b.title)) {
+              newImportState[b.open_library_key] = 'done';
+            }
+          });
+          setAddingState(newImportState);
+        } else {
+          setAddingState({});
         }
-        
-        setDefaultShelf(fetchedBooks);
-      } catch (err) {
-        console.error(err);
       }
+      
+      setDefaultShelf(fetchedBooks);
+      setCurrentPage(page);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingPage(false);
     }
-    init();
+  }
+
+  useEffect(() => {
+    fetchPage(1);
   }, []);
 
   async function handleImportToSystem(e: React.MouseEvent, book: any) {
@@ -117,15 +127,25 @@ export default function Home() {
         <h2 className="chewy-font" style={{ fontSize: '1.8rem', margin: 0 }}>Popular</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', cursor: 'pointer' }} onClick={() => navigate('/showcase/all')}>View All</span>
-          <div style={{ display: 'flex', gap: '5px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid #EBE5DF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><ChevronLeft size={16} /></div>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid #EBE5DF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><ChevronRight size={16} /></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div onClick={() => !loadingPage && fetchPage(currentPage - 1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid #EBE5DF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: (currentPage > 1 && !loadingPage) ? 'pointer' : 'not-allowed', opacity: (currentPage > 1 && !loadingPage) ? 1 : 0.5 }}><ChevronLeft size={16} /></div>
+            
+            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--accent-purple)', minWidth: '20px', textAlign: 'center' }}>
+              {currentPage}
+            </span>
+            
+            <div onClick={() => !loadingPage && fetchPage(currentPage + 1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid #EBE5DF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: loadingPage ? 'not-allowed' : 'pointer', opacity: loadingPage ? 0.5 : 1 }}><ChevronRight size={16} /></div>
           </div>
         </div>
       </div>
 
-      <div className="books-grid">
-        {defaultShelf.map((b, i) => {
+      {loadingPage ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0', gridColumn: '1 / -1' }}>
+          <Loader2 size={40} className="lucide-spin" color="var(--accent-purple)" />
+        </div>
+      ) : (
+        <div className="books-grid">
+          {defaultShelf.map((b, i) => {
           const isDone = addingState[b.open_library_key] === 'done';
           const isImporting = addingState[b.open_library_key] === 'importing';
           
@@ -161,7 +181,8 @@ export default function Home() {
             </Link>
           );
         })}
-      </div>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: '20px', background: '#F1EBE3', padding: '20px', borderRadius: '24px' }}>
         <div style={{ flex: '0 0 160px', position: 'relative', display: 'flex', alignItems: 'flex-end' }}>
@@ -187,7 +208,9 @@ export default function Home() {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <Link to="/showcase/infantil" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div style={{ background: 'white', padding: '12px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
-              <div style={{ width: '40px', height: '40px', background: '#DE6B6B', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>🧩</div>
+              <div style={{ width: '40px', height: '40px', background: '#DE6B6B', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                <Puzzle size={20} />
+              </div>
               <div>
                 <h4 style={{ fontSize: '0.85rem', margin: 0 }}>Top 50 books for kids</h4>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>Picture books, book series.</p>
@@ -196,7 +219,9 @@ export default function Home() {
           </Link>
           <Link to="/showcase/clássico" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div style={{ background: 'white', padding: '12px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
-              <div style={{ width: '40px', height: '40px', background: '#E8B65A', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>🏛️</div>
+              <div style={{ width: '40px', height: '40px', background: '#E8B65A', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                <Landmark size={20} />
+              </div>
               <div>
                 <h4 style={{ fontSize: '0.85rem', margin: 0 }}>Top 50 Classic books</h4>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>Discover the most influential books.</p>
@@ -205,7 +230,9 @@ export default function Home() {
           </Link>
           <Link to="/showcase/ficção" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div style={{ background: 'white', padding: '12px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
-              <div style={{ width: '40px', height: '40px', background: '#8679B9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>🪐</div>
+              <div style={{ width: '40px', height: '40px', background: '#8679B9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                <Telescope size={20} />
+              </div>
               <div>
                 <h4 style={{ fontSize: '0.85rem', margin: 0 }}>Top 50 Sci-Fi books</h4>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>Discover the best sci-fi books.</p>

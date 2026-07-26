@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+import random
 from schemas import (
     RecommendationRequest, SimilarRequest, CombinedTropesRequest, 
     AdvancedRecommendationRequest, ScoreRequest, ExplainRequest, UserProfileRequest
@@ -59,35 +60,44 @@ async def get_advanced_recommendation(req: AdvancedRecommendationRequest):
         tropes_to_check.extend(words)
 
     for trope in tropes_to_check:
-        safe_trope = escape_prolog_string(trope.lower())
-        query = f"recommend_by_trope('{safe_trope}', Title)"
+        safe_term = escape_prolog_string(trope.lower())
+        
+        # Usa a nova regra de substring do Prolog para procurar em gêneros E tropos de uma vez
         try:
-            for r in prolog.query(query):
+            query_obj = prolog.query(f"recommend_by_substring('{safe_term}', Title)", maxresult=10)
+            for r in query_obj:
                 title = r["Title"]
                 if title not in results:
                     results.append(title)
+            query_obj.close()
         except Exception:
             pass
 
-    # 2. Busca por gênero se especificado
+    # 2. Busca por gênero explícito se especificado
     if req.genre:
         safe_genre = escape_prolog_string(req.genre.lower())
         query = f"recommend_by_genre('{safe_genre}', Title)"
         try:
-            for r in prolog.query(query):
+            query_obj = prolog.query(query, maxresult=10)
+            for r in query_obj:
                 title = r["Title"]
                 if title not in results:
                     results.append(title)
+            query_obj.close()
         except Exception:
             pass
 
-    # 3. Fallback inteligente: se não encontrou específico, consulta todos os livros do Prolog
+    # 3. Fallback inteligente: se não encontrou específico, consulta 30 livros e pega 5 aleatórios
     if not results:
+        all_books = []
         try:
-            for r in prolog.query("book(_, Title)"):
-                title = r["Title"]
-                if title not in results:
-                    results.append(title)
+            query_obj = prolog.query("book(_, Title)", maxresult=40)
+            for r in query_obj:
+                all_books.append(r["Title"])
+            query_obj.close()
+            if all_books:
+                random.shuffle(all_books)
+                results = all_books[:5]
         except Exception:
             pass
 

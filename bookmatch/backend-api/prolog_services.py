@@ -45,11 +45,11 @@ def sync_supabase_to_prolog():
         prolog.assertz(f"book('{book_id}', '{title}')")
         
         for genre in book.get("genres", []):
-            genre_normalized = genre.strip().lower()
+            genre_normalized = escape_prolog_string(genre.strip().lower())
             prolog.assertz(f"has_genre('{book_id}', '{genre_normalized}')")
             
         for trope in book.get("tropes", []):
-            trope_normalized = trope.strip().lower()
+            trope_normalized = escape_prolog_string(trope.strip().lower())
             prolog.assertz(f"has_trope('{book_id}', '{trope_normalized}')")
             
     print(f"Sincronização concluída com sucesso! {len(books)} livros carregados.")

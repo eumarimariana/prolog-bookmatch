@@ -52,6 +52,18 @@ recommend_similar(ReadTitle, RecommendedTitle) :-
     ( setof(T, recommend_similar_raw(ReadTitle, T), Titles) -> true ; Titles = [] ),
     member(RecommendedTitle, Titles).
 
+% --- BUSCA FLEXÍVEL (Substring) ---
+recommend_by_substring_raw(Substring, Title) :-
+    book(ID, Title),
+    (
+        (has_genre(ID, Genre), sub_string(Genre, _, _, _, Substring)) ;
+        (has_trope(ID, Trope), sub_string(Trope, _, _, _, Substring))
+    ).
+
+recommend_by_substring(Substring, Title) :-
+    ( setof(T, recommend_by_substring_raw(Substring, T), Titles) -> true ; Titles = [] ),
+    member(Title, Titles).
+
 
 % --- REGRAS COMPLEXAS (Novas) ---
 
