@@ -6,13 +6,18 @@ from prolog_services import prolog, supabase, escape_prolog_string
 router = APIRouter(prefix="/books", tags=["books"])
 
 @router.get("/openlibrary/search")
-async def search_books_openlibrary(q: str = Query(..., min_length=2, description="Termo para pesquisar na Open Library")):
+async def search_books_openlibrary(
+    q: str = Query(..., min_length=2, description="Termo para pesquisar na Open Library"),
+    page: int = Query(1, ge=1, description="Página da busca")
+):
     """
     Busca de livros na API Open Library.
     Consulta a base oficial e aberta respeitando caching e termos legais.
     """
-    results = search_open_library(q, limit=10)
-    return {"query": q, "count": len(results), "books": results}
+    limit = 20
+    offset = (page - 1) * limit
+    results = search_open_library(q, limit=limit, offset=offset)
+    return {"query": q, "count": len(results), "page": page, "books": results}
 
 @router.post("/import")
 async def import_book(book_data: BookImportSchema):

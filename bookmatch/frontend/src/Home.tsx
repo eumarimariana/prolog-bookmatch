@@ -1,210 +1,219 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { recommendForUserProfile, recommendWithExplanation } from './api';
-import { Sparkles, Bot, Loader2, BookOpen, BrainCircuit } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
+import { Search, Bookmark, ChevronLeft, ChevronRight, Eye, BookmarkPlus, BookmarkCheck, Library, Smartphone, Sparkles, Crown, Headphones, Rocket, Heart, Flame, Ghost, ShieldAlert } from 'lucide-react';
+import { searchOpenLibrary, importBookToProlog } from './api';
 
 const MOCK_USER_ID = '11111111-1111-1111-1111-111111111111';
 
 export default function Home() {
-  const [genre, setGenre] = useState('');
-  const [trope, setTrope] = useState('');
-  
-  const [results, setResults] = useState<any[]>([]);
   const [defaultShelf, setDefaultShelf] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'profile' | 'explain'>('profile');
-  const [hasSearched, setHasSearched] = useState(false);
-  
-  const [profileData, setProfileData] = useState<{ genres: string[], tropes: string[] } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [readBooks, setReadBooks] = useState<string[]>([]);
+  const [addingState, setAddingState] = useState<Record<string, 'importing' | 'done' | 'error'>>({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function init() {
-      // 1. Carrega estante padrão (últimos livros)
-      const { data: books } = await supabase.from('books').select('*').order('created_at', { ascending: false }).limit(6);
-      if (books) setDefaultShelf(books);
-
-      // 2. Carrega perfil para prefill
       try {
-        const { data, error } = await supabase.from('user_profiles').select('*').eq('id', MOCK_USER_ID).single();
-        let loadedGenres: string[] = [];
-        let loadedTropes: string[] = [];
+        const data = await searchOpenLibrary('popular', 1);
+        const fetchedBooks = data.books || [];
         
-        if (data && !error) {
-          loadedGenres = data.liked_genres || [];
-          loadedTropes = data.liked_tropes || [];
-        } else {
-          const local = localStorage.getItem('localProfile');
-          if (local) {
-            const p = JSON.parse(local);
-            loadedGenres = p.genres || [];
-            loadedTropes = p.tropes || [];
+        if (fetchedBooks.length > 0) {
+          const titles = fetchedBooks.map((b: any) => b.title);
+          const { data: existingBooks } = await supabase.from('books').select('title, id').in('title', titles);
+          
+          if (existingBooks && existingBooks.length > 0) {
+            const existingTitles = existingBooks.map((b: any) => b.title);
+            const newImportState: Record<string, 'importing' | 'done' | 'error'> = {};
+            fetchedBooks.forEach((b: any) => {
+              if (existingTitles.includes(b.title)) {
+                newImportState[b.open_library_key] = 'done';
+              }
+            });
+            setAddingState(newImportState);
           }
         }
         
-        if (loadedGenres.length > 0) {
-          setProfileData({ genres: loadedGenres, tropes: loadedTropes });
-          setGenre(loadedGenres.join(', '));
-          setTrope(loadedTropes.join(', '));
-        }
-      } catch (e) {
-        console.error("Erro ao carregar perfil", e);
+        setDefaultShelf(fetchedBooks);
+      } catch (err) {
+        console.error(err);
       }
     }
     init();
   }, []);
 
-  // Busca dados completos (capas, autores) no Supabase baseado nos títulos que o Prolog devolveu
-  async function hydratePrologResults(titles: string[], xaiReasons?: any[]) {
-    if (titles.length === 0) return [];
+  async function handleImportToSystem(e: React.MouseEvent, book: any) {
+    e.preventDefault(); 
+    const bookKey = book.open_library_key;
+    if (addingState[bookKey] === 'done') return;
     
-    const { data: books } = await supabase
-      .from('books')
-      .select('*')
-      .in('title', titles);
-      
-    if (!books) return titles.map(t => ({ title: t }));
-
-    return titles.map((t, index) => {
-      const bookData = books.find((b: any) => b.title === t);
-      return {
-        title: t,
-        cover_url: bookData?.cover_url,
-        author: bookData?.author,
-        reason: xaiReasons ? xaiReasons[index].reason : null
-      };
-    });
-  }
-
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    if (!genre && mode === 'explain') return;
-    setLoading(true);
-    setHasSearched(true);
+    setAddingState(prev => ({ ...prev, [bookKey]: 'importing' }));
     try {
-      if (mode === 'profile') {
-        const reqG = genre ? genre.split(',').map(s=>s.trim()) : [];
-        const reqT = trope ? trope.split(',').map(s=>s.trim()) : [];
-        const data = await recommendForUserProfile(MOCK_USER_ID, reqG, reqT);
-        
-        const hydrated = await hydratePrologResults(data.recommendations);
-        setResults(hydrated);
-      } else {
-        const data = await recommendWithExplanation(genre, trope || "fantasia");
-        const titles = data.recommendations.map((r: any) => r.title);
-        const hydrated = await hydratePrologResults(titles, data.recommendations);
-        setResults(hydrated);
-      }
+      await importBookToProlog({
+        title: book.title,
+        author: book.author,
+        cover_url: book.cover_url,
+        genres: book.genres || ["Ficção"]
+      });
+      setAddingState(prev => ({ ...prev, [bookKey]: 'done' }));
     } catch (err) {
       console.error(err);
-      setResults([]);
-    } finally {
-      setLoading(false);
+      setAddingState(prev => ({ ...prev, [bookKey]: 'error' }));
     }
   }
 
-  const displayBooks = hasSearched ? results : defaultShelf;
+  function handleSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate('/search');
+    }
+  }
+
+  const categories = [
+    { name: 'All', icon: <Library size={24} />, color: '#57B894', genre: 'all' },
+    { name: 'eBooks', icon: <Smartphone size={24} />, color: '#6A9BC3', genre: 'ebooks' },
+    { name: 'New', icon: <Sparkles size={24} />, color: '#DE6B6B', genre: 'new' },
+    { name: 'Bestsellers', icon: <Crown size={24} />, color: '#E8B65A', genre: 'bestsellers' },
+    { name: 'Audiobooks', icon: <Headphones size={24} />, color: '#57B894', genre: 'audiobooks' },
+    { name: 'Fiction', icon: <Rocket size={24} />, color: '#9D6ED2', genre: 'ficção' },
+    { name: 'Romance', icon: <Heart size={24} />, color: '#F08D6C', genre: 'romance' },
+    { name: 'Fantasy', icon: <Flame size={24} />, color: '#588EB9', genre: 'fantasia' },
+    { name: 'Manga', icon: <Ghost size={24} />, color: '#8679B9', genre: 'manga' },
+    { name: 'Crime', icon: <ShieldAlert size={24} />, color: '#3E3B39', genre: 'mistério' },
+  ];
 
   return (
     <div className="animate-fade">
-      <header className="container" style={{ textAlign: 'center', padding: '5rem 2rem 3rem' }}>
-        <span className="badge" style={{ marginBottom: '1.5rem' }}>
-          <BrainCircuit size={16} /> Motor Lógico Prolog + Supabase
-        </span>
-        <h1 style={{ maxWidth: '800px', margin: '0 auto 1.5rem' }}>
-          Descubra o livro que vai <br/>
-          dominar sua semana.
-        </h1>
-      </header>
-
-      <section className="container" style={{ maxWidth: '800px', marginBottom: '4rem' }}>
-        <div className="glass-panel" style={{ padding: '2.5rem' }}>
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', justifyContent: 'center', background: 'rgba(0,0,0,0.03)', padding: '0.5rem', borderRadius: '9999px', width: 'fit-content', margin: '0 auto 2rem' }}>
-            <button 
-              className="btn"
-              style={{ background: mode === 'profile' ? 'white' : 'transparent', color: mode === 'profile' ? 'var(--primary-purple)' : 'var(--text-light)', boxShadow: mode === 'profile' ? '0 4px 12px rgba(0,0,0,0.05)' : 'none', padding: '0.75rem 1.5rem' }}
-              onClick={() => { setMode('profile'); setHasSearched(false); }}
-            >
-              <BookOpen size={18} /> Filtragem por Perfil
-            </button>
-            <button 
-              className="btn"
-              style={{ background: mode === 'explain' ? 'white' : 'transparent', color: mode === 'explain' ? 'var(--primary-purple)' : 'var(--text-light)', boxShadow: mode === 'explain' ? '0 4px 12px rgba(0,0,0,0.05)' : 'none', padding: '0.75rem 1.5rem' }}
-              onClick={() => { setMode('explain'); setHasSearched(false); }}
-            >
-              <Sparkles size={18} /> Explainable AI (XAI)
-            </button>
-          </div>
-
-          <form onSubmit={handleSearch} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div className="grid grid-cols-2" style={{ gap: '1.5rem' }}>
-              <div className="input-group">
-                <label>Gênero Favorito {mode === 'explain' ? '*' : ''}</label>
-                <input 
-                  type="text" 
-                  placeholder="Ex: Romance, Fantasia, Distopia" 
-                  value={genre} 
-                  onChange={e => setGenre(e.target.value)}
-                  required={mode === 'explain'}
-                />
-              </div>
-              <div className="input-group">
-                <label>Trope / Tema {mode === 'explain' ? '*' : '(Opcional)'}</label>
-                <input 
-                  type="text" 
-                  placeholder="Ex: Melancólico, Found Family" 
-                  value={trope} 
-                  onChange={e => setTrope(e.target.value)}
-                  required={mode === 'explain'}
-                />
-              </div>
-            </div>
-            
-            <button type="submit" className="btn btn-primary" style={{ alignSelf: 'center', marginTop: '1rem', padding: '1rem 3rem' }} disabled={loading}>
-              {loading ? <Loader2 className="lucide-spin" size={24} /> : <Bot size={24} />}
-              {loading ? 'Consultando Prolog...' : 'Inferir Recomendações'}
-            </button>
-          </form>
+      <div className="top-bar">
+        <form className="search-input-wrapper" onSubmit={handleSearchSubmit}>
+          <Search size={20} color="var(--text-muted)" style={{ marginRight: '10px' }} />
+          <input 
+            type="text" 
+            placeholder="Search for books in Open Library..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button type="submit" className="btn-gradient">search</button>
+        </form>
+        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#F1EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+          <Bookmark size={20} color="var(--text-muted)" />
+          <div style={{ position: 'absolute', top: 5, right: 5, width: 10, height: 10, background: 'var(--accent-red)', borderRadius: '50%' }}></div>
         </div>
-      </section>
+      </div>
 
-      <section className="container animate-fade" style={{ marginBottom: '6rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <h2>{hasSearched ? 'Resultados da Inferência Lógica' : 'Estante em Destaque'}</h2>
-          <p>{hasSearched ? `O Prolog selecionou estas obras baseadas nas suas regras de ${mode === 'profile' ? 'Filtragem por Perfil' : 'Explainable AI'}` : 'Últimos livros adicionados ao catálogo e injetados no Prolog.'}</p>
+      <div className="categories-row">
+        {categories.map((c, i) => (
+          <div key={i} className="category-item" onClick={() => navigate(`/showcase/${c.genre}`)}>
+            <div className="cat-icon-box" style={{ borderColor: c.color, color: c.color }}>
+              {c.icon}
+            </div>
+            <span>{c.name}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="section-header">
+        <h2 className="chewy-font" style={{ fontSize: '1.8rem', margin: 0 }}>Popular</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', cursor: 'pointer' }} onClick={() => navigate('/showcase/all')}>View All</span>
+          <div style={{ display: 'flex', gap: '5px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid #EBE5DF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><ChevronLeft size={16} /></div>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid #EBE5DF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><ChevronRight size={16} /></div>
+          </div>
+        </div>
+      </div>
+
+      <div className="books-grid">
+        {defaultShelf.map((b, i) => {
+          const isDone = addingState[b.open_library_key] === 'done';
+          const isImporting = addingState[b.open_library_key] === 'importing';
+          
+          return (
+            <Link to={`/book/${encodeURIComponent(b.title)}`} key={i} className="book-card" style={{ position: 'relative' }}>
+              <div style={{ position: 'relative' }}>
+                {b.cover_url ? (
+                  <img src={b.cover_url} alt={b.title} />
+                ) : (
+                  <div style={{ width: '100%', aspectRatio: '2.5/4', background: '#D9D9D9', borderRadius: '12px', marginBottom: '12px' }} />
+                )}
+                
+                <button 
+                  onClick={(e) => handleImportToSystem(e, b)}
+                  title={isDone ? "Já adicionado ao Supabase/Prolog" : "Importar livro para o Prolog"}
+                  style={{ 
+                    position: 'absolute', bottom: '-10px', right: '15px', 
+                    width: '32px', height: '42px', 
+                    background: isDone ? '#57B894' : '#E8B65A', 
+                    color: 'white', border: 'none', display: 'flex', 
+                    alignItems: 'center', justifyContent: 'center', cursor: isDone ? 'default' : 'pointer',
+                    clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 85%, 0 100%)',
+                    zIndex: 10, paddingBottom: '8px'
+                  }}
+                >
+                  {isImporting ? <div style={{width: 14, height: 14, border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite'}} /> : (isDone ? <BookmarkCheck size={18} /> : <BookmarkPlus size={18} />)}
+                </button>
+              </div>
+              
+              <div className="book-title" style={{ marginTop: '10px' }}>{b.title}</div>
+              <div className="book-author">{b.author}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>{b.genres?.[0] || 'Fiction'}</div>
+            </Link>
+          );
+        })}
+      </div>
+
+      <div style={{ display: 'flex', gap: '20px', background: '#F1EBE3', padding: '20px', borderRadius: '24px' }}>
+        <div style={{ flex: '0 0 160px', position: 'relative', display: 'flex', alignItems: 'flex-end' }}>
+          <div style={{ width: '100%', height: '140px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '2px' }}>
+             <div style={{ height: '24px', background: '#DE6B6B', borderRadius: '4px' }}></div>
+             <div style={{ height: '28px', background: '#7162A5', borderRadius: '4px' }}></div>
+             <div style={{ height: '20px', background: '#57B894', borderRadius: '4px' }}></div>
+             <div style={{ height: '32px', background: '#6A9BC3', borderRadius: '4px' }}></div>
+             <div style={{ height: '24px', background: '#8679B9', borderRadius: '4px' }}></div>
+          </div>
         </div>
         
-        <div className="grid grid-cols-3">
-          {displayBooks.length > 0 ? displayBooks.map((r, i) => (
-            <Link to={`/book/${encodeURIComponent(r.title)}`} key={i} className="book-card glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ flex: '1 0 auto' }}>
-                {r.cover_url ? (
-                  <img src={r.cover_url} alt={r.title} style={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover', borderRadius: '12px', marginBottom: '1rem' }} />
-                ) : (
-                  <div className="book-cover-placeholder">
-                    <BookOpen size={48} opacity={0.3} />
-                  </div>
-                )}
-                
-                <h3 style={{ fontSize: '1.3rem', marginBottom: '0.25rem' }}>{r.title}</h3>
-                {r.author && <p style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>por {r.author}</p>}
-                
-                {r.reason && (
-                  <div className="xai-box" style={{ marginBottom: '1rem' }}>
-                    <strong>Prolog:</strong> {r.reason}
-                  </div>
-                )}
-              </div>
-            </Link>
-          )) : (
-            <div className="glass-panel" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 2rem' }}>
-              <Bot size={48} color="var(--text-light)" style={{ opacity: 0.5, margin: '0 auto 1rem' }} />
-              <h3>Nenhum match perfeito encontrado.</h3>
-              <p style={{ margin: 0 }}>O motor Prolog não encontrou um cruzamento exato para esses termos. Tente outros tropos.</p>
-            </div>
-          )}
+        <div style={{ flex: 1, padding: '10px 0' }}>
+          <h3 className="chewy-font" style={{ fontSize: '1.6rem', marginBottom: '10px' }}>2026 year 50 most popular Bestsellers</h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '20px', maxWidth: '300px' }}>
+            List of the most interesting books of the year based on our global API catalog.
+          </p>
+          <button onClick={() => navigate('/showcase/bestsellers')} style={{ background: '#E76666', color: 'white', border: 'none', padding: '8px 24px', borderRadius: '99px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 600 }}>
+            <Eye size={16} /> view all
+          </button>
         </div>
-      </section>
+
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <Link to="/showcase/infantil" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div style={{ background: 'white', padding: '12px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
+              <div style={{ width: '40px', height: '40px', background: '#DE6B6B', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>🧩</div>
+              <div>
+                <h4 style={{ fontSize: '0.85rem', margin: 0 }}>Top 50 books for kids</h4>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>Picture books, book series.</p>
+              </div>
+            </div>
+          </Link>
+          <Link to="/showcase/clássico" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div style={{ background: 'white', padding: '12px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
+              <div style={{ width: '40px', height: '40px', background: '#E8B65A', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>🏛️</div>
+              <div>
+                <h4 style={{ fontSize: '0.85rem', margin: 0 }}>Top 50 Classic books</h4>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>Discover the most influential books.</p>
+              </div>
+            </div>
+          </Link>
+          <Link to="/showcase/ficção" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div style={{ background: 'white', padding: '12px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
+              <div style={{ width: '40px', height: '40px', background: '#8679B9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>🪐</div>
+              <div>
+                <h4 style={{ fontSize: '0.85rem', margin: 0 }}>Top 50 Sci-Fi books</h4>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>Discover the best sci-fi books.</p>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

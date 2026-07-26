@@ -12,7 +12,7 @@ HEADERS = {
 }
 
 @lru_cache(maxsize=128)
-def search_open_library(query: str, limit: int = 10) -> List[Dict[str, Any]]:
+def search_open_library(query: str, limit: int = 10, offset: int = 0) -> List[Dict[str, Any]]:
     """
     Busca livros na API pública e aberta da Open Library.
     Utiliza LRU cache para respeitar a taxa de requisições e evitar spam.
@@ -23,7 +23,7 @@ def search_open_library(query: str, limit: int = 10) -> List[Dict[str, Any]]:
     try:
         response = requests.get(
             OPEN_LIBRARY_SEARCH_URL,
-            params={"q": query.strip(), "limit": limit, "fields": "key,title,author_name,first_publish_year,cover_i,subject"},
+            params={"q": query.strip(), "limit": limit, "offset": offset, "fields": "key,title,author_name,first_publish_year,cover_i,subject"},
             headers=HEADERS,
             timeout=8
         )
@@ -36,7 +36,7 @@ def search_open_library(query: str, limit: int = 10) -> List[Dict[str, Any]]:
             cover_url = (
                 f"{OPEN_LIBRARY_COVERS_URL}/{cover_id}-L.jpg"
                 if cover_id
-                else "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"
+                else None
             )
 
             authors = doc.get("author_name", [])
