@@ -89,9 +89,9 @@ export default function Search() {
   return (
     <div className="animate-fade">
       <header style={{ paddingBottom: '30px' }}>
-        <h1 className="chewy-font" style={{ fontSize: '2.5rem', margin: '0 0 10px 0' }}>Pesquisar Catálogo Global</h1>
+        <h1 className="chewy-font" style={{ fontSize: '2.5rem', margin: '0 0 10px 0' }}>Recomendações & Pesquisa</h1>
         <p style={{ color: 'var(--text-muted)' }}>
-          Busque livros no mundo inteiro através da Open Library e importe-os diretamente para o motor lógico Prolog (e para o Supabase) com um clique.
+          Descubra novos livros de duas formas: pesquisando diretamente via API Global (Open Library) ou obtendo recomendações do nosso banco de dados aplicando as regras lógicas do motor Prolog.
         </p>
       </header>
 
@@ -101,13 +101,13 @@ export default function Search() {
             onClick={() => setFilterMode('openlibrary')}
             style={{ padding: '8px 16px', borderRadius: '99px', border: 'none', background: filterMode === 'openlibrary' ? 'var(--accent-purple)' : '#F9F8F6', color: filterMode === 'openlibrary' ? 'white' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600 }}
           >
-            Busca Global
+            Pesquisa via API (Global)
           </button>
           <button 
             onClick={() => setFilterMode('prolog')}
             style={{ padding: '8px 16px', borderRadius: '99px', border: 'none', background: filterMode === 'prolog' ? 'var(--accent-purple)' : '#F9F8F6', color: filterMode === 'prolog' ? 'white' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600 }}
           >
-            Filtros IA (Gênero & Trope)
+            Recomendações Banco de Dados (Regras Prolog)
           </button>
         </div>
 
