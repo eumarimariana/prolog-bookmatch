@@ -63,11 +63,41 @@ Se a sincronização falhar (ex: tabela vazia ou credenciais erradas), o erro é
 ## Endpoints
 
 ### `POST /recommend/genre`
-Recomenda livros por gênero.
+Recomenda livros baseando-se estritamente num gênero lógico.
 
 ```json
 { "genre": "distopia" }
 ```
+
+### `POST /recommend/advanced`
+Cruza múltiplos critérios (temas, humores e prompt textual) injetando heurísticas dinâmicas no Prolog para achar títulos mais específicos.
+
+```json
+{
+  "prompt": "Quero um livro tenso e misterioso",
+  "moods": ["tenso"],
+  "themes": ["mistério"],
+  "genre": "suspense"
+}
+```
+
+### `GET /books/openlibrary/search?q=Harry+Potter`
+Busca livros ao vivo na [Open Library API](https://openlibrary.org/developers/api). A busca retorna dados padronizados com as respectivas `cover_url` (capas reais), respeitando as diretrizes de rate-limiting.
+
+### `POST /books/import`
+Recebe o DTO de um livro, salva na base de dados (Supabase) e injeta **dinamicamente no SWI-Prolog em tempo de execução** (`prolog.assertz`). 
+
+```json
+{
+  "title": "Harry Potter",
+  "author": "J.K. Rowling",
+  "cover_url": "https://covers.openlibrary.org/b/id/10521270-L.jpg",
+  "genres": ["fantasia"]
+}
+```
+
+### Integração Open Library (Legalidade & Caching)
+O serviço (`open_library_service.py`) utiliza os endpoints abertos da Open Library de forma responsável (sem necessidade de API Key). Capas são puxadas por ID e ISBN, em conformidade com as regras de uso não comercial da Open Library.
 
 ## Testando a lógica Prolog isoladamente
 

@@ -6,44 +6,45 @@
 :root {
   --radius: 0.75rem;
 
-  /* Brand palette: Sable Green + Fire + Mango Tango + Dawn Pink + Alien Green */
-  --brand-purple: #036c17;        /* Sable Green (primary) */
-  --brand-purple-deep: #024a10;
-  --brand-brown: #ae4202;         /* Fire */
-  --brand-yellow: #e87305;        /* Mango Tango (warm accent) */
-  --brand-cream: #f2ecde;         /* Dawn Pink */
-  --brand-lime: #5fca00;          /* Alien Green */
+  /* Brand palette: Vivid Lilás/Purple + Cocoa Brown + Bright Yellow + Warm Cream */
+  --brand-purple: #9333ea;        /* Vivid Lilás/Magenta Purple */
+  --brand-purple-deep: #5b21b6;   /* Deep Purple */
+  --brand-brown: #6b3a19;         /* Cocoa Brown */
+  --brand-yellow: #facc15;        /* Bright Vivid Yellow */
+  --brand-cream: #f7f1e5;         /* Warm Cream/Beige */
+  --brand-lime: #c084fc;          /* Soft Lilac */
+  --brand-purple-light: #f3e8ff;  /* Light Purple tint */
 
   /* System Colors */
-  --background: #f2ecde;
-  --foreground: #2a1a08;
-  --card: #faf5e9;
-  --card-foreground: #2a1a08;
-  --popover: #faf5e9;
-  --popover-foreground: #2a1a08;
-  --primary: #036c17;
-  --primary-foreground: #f2ecde;
-  --secondary: #ae4202;
-  --secondary-foreground: #f2ecde;
-  --muted: #e8dfc9;
-  --muted-foreground: #6b4a20;
-  --accent: #e87305;
-  --accent-foreground: #f2ecde;
-  --destructive: #ae4202;
-  --destructive-foreground: #f2ecde;
-  --border: #d9cfb5;
-  --input: #d9cfb5;
-  --ring: #036c17;
+  --background: #f7f1e5;
+  --foreground: #4a2c11;
+  --card: #ffffff;
+  --card-foreground: #4a2c11;
+  --popover: #ffffff;
+  --popover-foreground: #4a2c11;
+  --primary: #9333ea;
+  --primary-foreground: #ffffff;
+  --secondary: #6b3a19;
+  --secondary-foreground: #ffffff;
+  --muted: #f3e8ff;
+  --muted-foreground: #7e22ce;
+  --accent: #facc15;
+  --accent-foreground: #3b0764;
+  --destructive: #b45309;
+  --destructive-foreground: #ffffff;
+  --border: #e8dccb;
+  --input: #e8dccb;
+  --ring: #9333ea;
   
-  /* Sidebar Colors (caso utilize os componentes de sidebar no futuro) */
-  --sidebar: #024a10;
-  --sidebar-foreground: #f2ecde;
-  --sidebar-primary: #5fca00;
-  --sidebar-primary-foreground: #024a10;
-  --sidebar-accent: #036c17;
-  --sidebar-accent-foreground: #f2ecde;
-  --sidebar-border: #036c17;
-  --sidebar-ring: #5fca00;
+  /* Sidebar Colors */
+  --sidebar: #4c1d95;
+  --sidebar-foreground: #faf5ff;
+  --sidebar-primary: #eab308;
+  --sidebar-primary-foreground: #1e1b4b;
+  --sidebar-accent: #7c3aed;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #5b21b6;
+  --sidebar-ring: #eab308;
 }
 
 @layer base {
@@ -60,5 +61,69 @@
   h1, h2, h3, h4 {
     font-family: "Fraunces", ui-serif, Georgia, serif;
     letter-spacing: -0.02em;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-8px) rotate(1deg);
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 0.35;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.65;
+      transform: scale(1.08);
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 4s ease-in-out infinite;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 }
