@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, UserCircle, Save, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
+import { BookOpen, UserCircle, Save, CheckCircle2, Loader2, Sparkles, Heart } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { recommendForUserProfile } from './api';
 
@@ -12,6 +12,7 @@ export default function Library() {
   const [readBooks, setReadBooks] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [favoriteBooksDetails, setFavoriteBooksDetails] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [prologBooks, setPrologBooks] = useState<any[]>([]);
@@ -35,6 +36,10 @@ export default function Library() {
           if (data.liked_genres || data.liked_tropes || data.read_books) {
              fetchRecommendations(data.liked_genres || [], data.liked_tropes || [], data.read_books || []);
           }
+          
+          if (data.read_books && data.read_books.length > 0) {
+             const { data: favs } = await supabase.from('books').select('*').in('id', data.read_books);
+             if (favs) setFavoriteBooksDetails(favs);
           }
         } else if (error && error.code !== 'PGRST116') {
           console.error("Erro ao carregar perfil:", error);
@@ -157,10 +162,47 @@ export default function Library() {
         )}
       </section>
 
-      <section style={{ maxWidth: '700px', margin: '0 auto', marginBottom: '60px' }}>
+      <section style={{ maxWidth: '700px', margin: '0 auto 40px', padding: '30px', background: '#F9F8F6', borderRadius: '30px' }}>
         <h2 className="chewy-font" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', fontSize: '1.8rem' }}>
+          <Heart fill="var(--accent-red)" color="var(--accent-red)" /> Livros Favoritados
+        </h2>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
+          Você pode favoritar livros na página de detalhes de cada obra. O Prolog utiliza esses livros para encontrar recomendações parecidas para você!
+        </p>
+
+        {favoriteBooksDetails.length > 0 ? (
+          <div className="books-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))' }}>
+            {favoriteBooksDetails.map((b, i) => (
+              <div key={i} className="book-card">
+                <div style={{ position: 'relative' }}>
+                  {b.cover_url ? (
+                    <img src={b.cover_url} alt={b.title} style={{ width: '100%', borderRadius: '12px', aspectRatio: '2.5/4', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '100%', aspectRatio: '2.5/4', background: '#D9D9D9', borderRadius: '12px' }} />
+                  )}
+                  <div style={{ position: 'absolute', top: 5, right: 5, background: 'white', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Heart size={14} fill="var(--accent-red)" color="var(--accent-red)" />
+                  </div>
+                </div>
+                <div className="book-title" style={{ marginTop: '10px', fontSize: '0.9rem' }}>{b.title}</div>
+                <div className="book-author" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{b.author}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ padding: '30px', background: 'white', borderRadius: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+            Nenhum livro favoritado ainda. Pesquise e clique no ❤️!
+          </div>
+        )}
+      </section>
+
+      <section style={{ maxWidth: '700px', margin: '0 auto', marginBottom: '60px' }}>
+        <h2 className="chewy-font" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', fontSize: '1.8rem' }}>
           <Sparkles color="var(--accent-purple)" /> Recomendados para Você (Prolog IA)
         </h2>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.95rem' }}>
+          Baseado nos seus <strong>Favoritos</strong>, Gêneros e Tropos, o motor lógico analisou todo o catálogo para sugerir as obras abaixo.
+        </p>
         
         {loadingRecs ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '30px', background: '#F9F8F6', borderRadius: '30px' }}>
@@ -179,7 +221,7 @@ export default function Library() {
           <div style={{ padding: '40px', background: '#F9F8F6', borderRadius: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
             <BookOpen size={48} style={{ opacity: 0.3, margin: '0 auto 10px' }} />
             <p style={{ margin: 0, fontSize: '1rem', lineHeight: 1.6 }}>
-              Preencha seus gêneros e tropos favoritos acima e salve para ver a Inteligência Artificial em ação!
+              Favorite livros ou preencha seus gêneros e tropos favoritos acima e salve para ver a Inteligência Artificial em ação!
             </p>
           </div>
         )}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { recommendByScore } from './api';
-import { ArrowLeft, Target, BookOpen, Calculator, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Target, BookOpen, Calculator, Loader2, CheckCircle2, Heart } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
 const MOCK_USER_ID = '11111111-1111-1111-1111-111111111111';
@@ -113,9 +113,9 @@ export default function BookDetails() {
             </p>
             
             <div style={{ display: 'flex', gap: '15px' }}>
-              <button onClick={handleAddToLibrary} className="btn-gradient" style={{ opacity: added ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: 10 }} disabled={loadingAdd || added || !bookDetails?.id}>
-                {loadingAdd ? <Loader2 className="lucide-spin" size={18} /> : (added ? <CheckCircle2 size={18} /> : <BookOpen size={18} />)}
-                {added ? 'Na sua Estante' : 'Adicionar à Estante'}
+              <button onClick={handleAddToLibrary} className="btn-gradient" style={{ opacity: added ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: 10, background: added ? '#F9F8F6' : 'var(--accent-red)', color: added ? 'var(--text-dark)' : 'white' }} disabled={loadingAdd || added || !bookDetails?.id}>
+                {loadingAdd ? <Loader2 className="lucide-spin" size={18} /> : (added ? <Heart size={18} fill="var(--accent-red)" color="var(--accent-red)" /> : <Heart size={18} />)}
+                {added ? 'Favoritado' : 'Favoritar Livro'}
               </button>
             </div>
           </div>
