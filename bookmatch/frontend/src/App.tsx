@@ -6,7 +6,9 @@ import BookDetails from './BookDetails';
 import Search from './Search';
 import Library from './Library';
 import Showcase from './Showcase';
+import Catalog from './Catalog';
 import { recommendAdvanced } from './api';
+import logoUrl from './assets/logo.png';
 
 function Sidebar() {
   const location = useLocation();
@@ -15,8 +17,8 @@ function Sidebar() {
   return (
     <div className="sidebar">
       <div style={{ marginBottom: '20px' }}>
-        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#D9D9D9', overflow: 'hidden' }}>
-          <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Mariana" alt="avatar" style={{width:'100%', height:'100%'}}/>
+        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#D9D9D9', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img src={logoUrl} alt="Logo" style={{width:'100%', height:'100%', objectFit: 'cover'}}/>
         </div>
       </div>
       
@@ -29,9 +31,9 @@ function Sidebar() {
       <Link to="/library" className={`nav-icon ${path === '/library' ? 'active' : ''}`}>
         <Heart size={24} />
       </Link>
-      <Link to="#" className="nav-link" style={{ marginTop: 'auto', marginBottom: '20px' }}>
+      <Link to="/catalog" className="nav-link" style={{ marginTop: 'auto', marginBottom: '20px' }}>
         <div style={{ width: '40px', height: '120px', background: '#3D5E7B', borderRadius: '99px', display: 'flex', alignItems: 'center', justifyContent: 'center', writingMode: 'vertical-rl', transform: 'rotate(180deg)', color: 'white', fontWeight: 700, fontSize: '0.85rem' }}>
-          <Bookmark size={16} style={{ marginBottom: '8px' }} /> subscribe
+          <Bookmark size={16} style={{ marginBottom: '8px' }} /> prolog DB
         </div>
       </Link>
     </div>
@@ -129,6 +131,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/search" element={<Search />} />
             <Route path="/library" element={<Library />} />
+            <Route path="/catalog" element={<Catalog />} />
             <Route path="/showcase/:genre" element={<Showcase />} />
             <Route path="/book/:title" element={<BookDetails />} />
           </Routes>

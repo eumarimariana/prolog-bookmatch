@@ -96,10 +96,10 @@ export default function Home() {
           />
           <button type="submit" className="btn-gradient">search</button>
         </form>
-        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#F1EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+        <Link to="/catalog" style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#F1EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', cursor: 'pointer', textDecoration: 'none' }}>
           <Bookmark size={20} color="var(--text-muted)" />
           <div style={{ position: 'absolute', top: 5, right: 5, width: 10, height: 10, background: 'var(--accent-red)', borderRadius: '50%' }}></div>
-        </div>
+        </Link>
       </div>
 
       <div className="categories-row">

@@ -14,6 +14,7 @@ export default function Library() {
   const [loading, setLoading] = useState(true);
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
+  const [prologBooks, setPrologBooks] = useState<any[]>([]);
 
   // Load profile from Supabase
   useEffect(() => {
@@ -34,9 +35,11 @@ export default function Library() {
           if (data.liked_genres || data.liked_tropes || data.read_books) {
              fetchRecommendations(data.liked_genres || [], data.liked_tropes || [], data.read_books || []);
           }
+          }
         } else if (error && error.code !== 'PGRST116') {
           console.error("Erro ao carregar perfil:", error);
         }
+
       } catch (err) {
         console.error(err);
       } finally {
