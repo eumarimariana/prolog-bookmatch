@@ -54,7 +54,7 @@ export default function Catalog() {
         ) : prologBooks.length > 0 ? (
           <div className="books-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))' }}>
             {prologBooks.map((b, i) => (
-              <div key={i} className="book-card" style={{ position: 'relative' }}>
+              <Link to={`/book/${encodeURIComponent(b.title)}`} key={i} className="book-card" style={{ position: 'relative', display: 'block', textDecoration: 'none', color: 'inherit' }}>
                 <div style={{ position: 'relative' }}>
                   {b.cover_url ? (
                     <img src={b.cover_url} alt={b.title} style={{ width: '100%', borderRadius: '12px', aspectRatio: '2.5/4', objectFit: 'cover' }} />
@@ -67,7 +67,7 @@ export default function Catalog() {
                 </div>
                 <div className="book-title" style={{ marginTop: '10px', fontSize: '0.9rem' }}>{b.title}</div>
                 <div className="book-author" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{b.author}</div>
-              </div>
+              </Link>
             ))}
           </div>
         ) : (
