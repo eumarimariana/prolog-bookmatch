@@ -34,3 +34,17 @@ class BookImportSchema(BaseModel):
     cover_url: Optional[str] = None
     genres: Optional[List[str]] = []
     tropes: Optional[List[str]] = []
+
+class ScoreRequest(BaseModel):
+    reference_title: str
+
+class ExplainRequest(BaseModel):
+    genre: str
+    trope: str
+
+class UserProfileRequest(BaseModel):
+    user_id: str
+    liked_genres: Optional[List[str]] = []
+    liked_tropes: Optional[List[str]] = []
+    disliked_tropes: Optional[List[str]] = []
+    read_books: Optional[List[str]] = []
