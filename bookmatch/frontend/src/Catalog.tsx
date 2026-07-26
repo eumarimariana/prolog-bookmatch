@@ -12,7 +12,15 @@ export default function Catalog() {
       try {
         const { data: dbBooks, error: dbError } = await supabase.from('books').select('*').order('created_at', { ascending: false });
         if (dbBooks && !dbError) {
-          setPrologBooks(dbBooks);
+          const uniqueBooks = [];
+          const seen = new Set();
+          for (const b of dbBooks) {
+            if (!seen.has(b.title)) {
+              seen.add(b.title);
+              uniqueBooks.push(b);
+            }
+          }
+          setPrologBooks(uniqueBooks);
         }
       } catch (err) {
         console.error(err);
