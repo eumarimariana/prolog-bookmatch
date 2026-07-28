@@ -112,6 +112,15 @@ Cruza múltiplos critérios (temas, humores e prompt textual) injetando heuríst
 }
 ```
 
+### `GET /profiles/user_profiles/{user_id}`
+Busca o perfil do leitor na tabela `user_profiles` e cruza com a tabela `user_library` para retornar a lista consolidada de livros favoritados.
+
+### `POST /profiles/user_profiles`
+Salva as preferências (nome, gêneros, tropos) do usuário na tabela `user_profiles`.
+
+### `POST /profiles/user_library`
+Insere a relação de um livro favoritado na tabela `user_library` associando `user_id` e `book_id`.
+
 ### `GET /books/openlibrary/search?q=Harry+Potter`
 Busca livros ao vivo na [Open Library API](https://openlibrary.org/developers/api). A busca retorna dados padronizados com as respectivas `cover_url` (capas reais), respeitando as diretrizes de rate-limiting.
 

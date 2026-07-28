@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { recommendByScore } from './api';
+import { recommendByScore, addFavoriteBook, getUserProfile } from './api';
 import { ArrowLeft, Target, BookOpen, Calculator, Loader2, CheckCircle2, Heart } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
@@ -26,7 +26,7 @@ export default function BookDetails() {
           setBookDetails(dbBooks[0]);
 
           // Check if already in user profile
-          const { data: profile } = await supabase.from('user_profiles').select('read_books').eq('id', MOCK_USER_ID).single();
+          const profile = await getUserProfile(MOCK_USER_ID);
           if (profile && profile.read_books?.includes(dbBooks[0].id)) {
             setAdded(true);
           }
@@ -64,11 +64,10 @@ export default function BookDetails() {
     if (!bookDetails?.id) return;
     setLoadingAdd(true);
     try {
-      const { data: profile } = await supabase.from('user_profiles').select('read_books').eq('id', MOCK_USER_ID).single();
+      const profile = await getUserProfile(MOCK_USER_ID);
       const currentRead = profile?.read_books || [];
       if (!currentRead.includes(bookDetails.id)) {
-        currentRead.push(bookDetails.id);
-        await supabase.from('user_profiles').update({ read_books: currentRead }).eq('id', MOCK_USER_ID);
+        await addFavoriteBook(MOCK_USER_ID, bookDetails.id);
       }
       setAdded(true);
     } catch (e) {

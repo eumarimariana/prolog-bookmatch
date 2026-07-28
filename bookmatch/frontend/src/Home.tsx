@@ -212,7 +212,7 @@ export default function Home() {
                 <Puzzle size={20} />
               </div>
               <div>
-                <h4 style={{ fontSize: '0.85rem', margin: 0 }}>Top 50 books for kids</h4>
+                <h4 style={{ fontSize: '0.85rem', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>Top 50 books for kids <Sparkles size={14} color="#DE6B6B" /></h4>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>Picture books, book series.</p>
               </div>
             </div>
@@ -223,7 +223,7 @@ export default function Home() {
                 <Landmark size={20} />
               </div>
               <div>
-                <h4 style={{ fontSize: '0.85rem', margin: 0 }}>Top 50 Classic books</h4>
+                <h4 style={{ fontSize: '0.85rem', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>Top 50 Classic books <Crown size={14} color="#E8B65A" /></h4>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>Discover the most influential books.</p>
               </div>
             </div>
@@ -234,7 +234,7 @@ export default function Home() {
                 <Telescope size={20} />
               </div>
               <div>
-                <h4 style={{ fontSize: '0.85rem', margin: 0 }}>Top 50 Sci-Fi books</h4>
+                <h4 style={{ fontSize: '0.85rem', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>Top 50 Sci-Fi books <Rocket size={14} color="#8679B9" /></h4>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>Discover the best sci-fi books.</p>
               </div>
             </div>

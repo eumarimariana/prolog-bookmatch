@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BookOpen, UserCircle, Save, CheckCircle2, Loader2, Sparkles, Heart } from 'lucide-react';
 import { supabase } from './lib/supabase';
-import { recommendForUserProfile } from './api';
+import { recommendForUserProfile, saveUserProfile, getUserProfile } from './api';
 import { Link } from 'react-router-dom';
 
 const MOCK_USER_ID = '11111111-1111-1111-1111-111111111111';
@@ -22,13 +22,9 @@ export default function Library() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', MOCK_USER_ID)
-          .single();
+        const data = await getUserProfile(MOCK_USER_ID);
 
-        if (data && !error) {
+        if (data) {
           setName(data.name || '');
           setGenres((data.liked_genres || []).join(', '));
           setTropes((data.liked_tropes || []).join(', '));
@@ -42,10 +38,7 @@ export default function Library() {
              const { data: favs } = await supabase.from('books').select('*').in('id', data.read_books);
              if (favs) setFavoriteBooksDetails(favs);
           }
-        } else if (error && error.code !== 'PGRST116') {
-          console.error("Erro ao carregar perfil:", error);
         }
-
       } catch (err) {
         console.error(err);
       } finally {
@@ -75,20 +68,19 @@ export default function Library() {
     const parsedTropes = tropes.split(',').map(t => t.trim()).filter(Boolean);
 
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .upsert({
-          id: MOCK_USER_ID,
-          name: name || 'Leitor',
-          liked_genres: parsedGenres,
-          liked_tropes: parsedTropes
-        });
+      await saveUserProfile({
+        id: MOCK_USER_ID,
+        name: name || 'Leitor',
+        liked_genres: parsedGenres,
+        liked_tropes: parsedTropes
+      });
 
-      if (error) {
-        console.error("Erro do Supabase ao salvar:", error);
-        localStorage.setItem('localProfile', JSON.stringify({ name, genres: parsedGenres, tropes: parsedTropes }));
-      }
+    } catch (err) {
+      console.error("Erro ao salvar:", err);
+      localStorage.setItem('localProfile', JSON.stringify({ name, genres: parsedGenres, tropes: parsedTropes }));
+    }
 
+    try {
       setSaved(true);
       fetchRecommendations(parsedGenres, parsedTropes, readBooks);
       setTimeout(() => setSaved(false), 3000);
@@ -165,7 +157,7 @@ export default function Library() {
 
       <section style={{ maxWidth: '700px', margin: '0 auto 40px', padding: '30px', background: '#F9F8F6', borderRadius: '30px' }}>
         <h2 className="chewy-font" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', fontSize: '1.8rem' }}>
-          <Heart fill="var(--accent-red)" color="var(--accent-red)" /> Livros Favoritados
+          <Heart size={24} color="var(--accent-red)" /> Livros Favoritados
         </h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
           Você pode favoritar livros na página de detalhes de cada obra. O Prolog utiliza esses livros para encontrar recomendações parecidas para você!
@@ -192,14 +184,14 @@ export default function Library() {
           </div>
         ) : (
           <div style={{ padding: '30px', background: 'white', borderRadius: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            Nenhum livro favoritado ainda. Pesquise e clique no ❤️!
+            Nenhum livro favoritado ainda. Pesquise e clique no ícone de coração!
           </div>
         )}
       </section>
 
       <section style={{ maxWidth: '700px', margin: '0 auto', marginBottom: '60px' }}>
         <h2 className="chewy-font" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', fontSize: '1.8rem' }}>
-          <Sparkles color="var(--accent-purple)" /> Recomendados para Você (Prolog IA)
+          <Sparkles size={24} color="var(--accent-purple)" /> Recomendados para Você (Prolog IA)
         </h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.95rem' }}>
           Baseado nos seus <strong>Favoritos</strong>, Gêneros e Tropos, o motor lógico analisou todo o catálogo para sugerir as obras abaixo.
@@ -213,7 +205,9 @@ export default function Library() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             {recommendations.map((title, idx) => (
               <div key={idx} style={{ padding: '20px', background: '#F9F8F6', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div style={{ width: '40px', height: '40px', background: 'var(--accent-purple)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>📚</div>
+                <div style={{ width: '40px', height: '40px', background: 'var(--accent-purple)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                  <BookOpen size={20} />
+                </div>
                 <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--text-dark)' }}>{title}</h3>
               </div>
             ))}

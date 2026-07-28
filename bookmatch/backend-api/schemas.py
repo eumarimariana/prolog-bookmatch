@@ -48,3 +48,13 @@ class UserProfileRequest(BaseModel):
     liked_tropes: Optional[List[str]] = []
     disliked_tropes: Optional[List[str]] = []
     read_books: Optional[List[str]] = []
+
+class UserProfileSaveRequest(BaseModel):
+    id: str
+    name: Optional[str] = None
+    liked_genres: Optional[List[str]] = None
+    liked_tropes: Optional[List[str]] = None
+
+class FavoriteBookRequest(BaseModel):
+    user_id: str
+    book_id: str

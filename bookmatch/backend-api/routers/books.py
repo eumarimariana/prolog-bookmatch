@@ -26,7 +26,7 @@ async def import_book(book_data: BookImportSchema):
     e insere dinamicamente os fatos correspondentes no motor Prolog!
     """
     try:
-        # 1. Salva no Supabase (se a tabela existir e estiver pronta)
+        # 1. Salva no Supabase (se a tabela existir e não houver duplicatas)
         record = {
             "title": book_data.title,
             "author": book_data.author,
@@ -37,6 +37,15 @@ async def import_book(book_data: BookImportSchema):
         
         db_res = None
         try:
+            # Verifica se já existe
+            existing = supabase.table("books").select("id").eq("title", book_data.title).execute()
+            if existing.data and len(existing.data) > 0:
+                return {
+                    "status": "success",
+                    "message": f"Livro '{book_data.title}' já existe no catálogo Supabase.",
+                    "book": record
+                }
+                
             db_res = supabase.table("books").insert(record).execute()
         except Exception as err:
             print(f"Aviso ao salvar no Supabase (seguindo com injeção no Prolog): {err}")

@@ -53,11 +53,30 @@ async def get_recommendation_by_combined_tropes(req: CombinedTropesRequest):
 async def get_advanced_recommendation(req: AdvancedRecommendationRequest):
     results = []
 
-    # 1. Busca por tropos/humores/temas no Prolog
+    # Mapping of common predefined prompts to exact English keywords that match the DB
+    PROMPT_MAPPING = {
+        "quero um romance clichê": ["romance", "contemporary", "love", "cliche"],
+        "fantasia épica com magia": ["fantasy", "magic", "epic", "high fantasy"],
+        "mistério tenso e suspense": ["mystery", "suspense", "thriller", "crime"],
+        "ficção científica no espaço": ["science fiction", "space", "sci-fi", "aliens"],
+        "uma história triste para chorar": ["tragedy", "drama", "sad", "emotional"],
+        "livros curtinhos para ler rápido": ["novella", "short story", "quick read"],
+        "enemies to lovers": ["enemies to lovers", "romance", "hate to love"],
+        "aventura com found family": ["adventure", "found family", "action"],
+        "terror psicológico assustador": ["horror", "psychological thriller", "scary"],
+        "distopia futurista": ["dystopia", "dystopian", "future", "post-apocalyptic"],
+        "um livro que se passa na escola": ["school", "high school", "young adult", "college"],
+        "mitologia grega ou deuses": ["mythology", "greek", "gods", "percy jackson"]
+    }
+
     tropes_to_check = list((req.moods or []) + (req.themes or []))
     if req.prompt:
-        words = [w.strip().lower() for w in req.prompt.split() if len(w) > 3]
-        tropes_to_check.extend(words)
+        lower_prompt = req.prompt.strip().lower()
+        if lower_prompt in PROMPT_MAPPING:
+            tropes_to_check.extend(PROMPT_MAPPING[lower_prompt])
+        else:
+            words = [w.strip().lower() for w in req.prompt.split() if len(w) > 3]
+            tropes_to_check.extend(words)
 
     for trope in tropes_to_check:
         safe_term = escape_prolog_string(trope.lower())

@@ -11,6 +11,7 @@
 % --- PESOS PARA O SISTEMA DE SCORING ---
 weight(genre, 10).
 weight(trope, 5).
+weight(partial, 2).
 
 % --- REGRAS BÁSICAS (Legado adaptado) ---
 
@@ -69,19 +70,23 @@ recommend_by_substring(Substring, Title) :-
 
 % 1. Sistema de Scoring (Similaridade entre Livros)
 similarity_score(BookID1, BookID2, TotalScore) :-
-    ( setof(W, G^(has_genre(BookID1, G), has_genre(BookID2, G), weight(genre, W)), GenreScores) -> true ; GenreScores = [] ),
-    ( setof(W, T^(has_trope(BookID1, T), has_trope(BookID2, T), weight(trope, W)), TropeScores) -> true ; TropeScores = [] ),
-    append(GenreScores, TropeScores, AllScores),
+    ( findall(W, (has_genre(BookID1, G), has_genre(BookID2, G), weight(genre, W)), GenreScores) -> true ; GenreScores = [] ),
+    ( findall(W, (has_trope(BookID1, T), has_trope(BookID2, T), weight(trope, W)), TropeScores) -> true ; TropeScores = [] ),
+    % Partial matches for genres
+    ( findall(W, (has_genre(BookID1, G1), has_genre(BookID2, G2), G1 \= G2, (sub_string(G1, _, _, _, G2) ; sub_string(G2, _, _, _, G1)), weight(partial, W)), PartialGScores) -> true ; PartialGScores = [] ),
+    append(GenreScores, TropeScores, TempScores),
+    append(TempScores, PartialGScores, AllScores),
     sum_list(AllScores, TotalScore).
 
 recommend_best_match(ReferenceTitle, RecommendedTitle, MaxScore) :-
     book(RefID, ReferenceTitle),
-    ( setof(Score-RecID, (book(RecID, _), RefID \= RecID, similarity_score(RefID, RecID, Score), Score > 0), Matches) -> true ; Matches = [] ),
+    ( findall(Score-RecID, (book(RecID, _), RefID \= RecID, similarity_score(RefID, RecID, Score), Score > 0), Matches) -> true ; Matches = [] ),
     Matches \= [],
-    % Sort in Prolog by default sorts by the first element of the pair (the score)
     keysort(Matches, SortedMatches),
     reverse(SortedMatches, DescendingMatches),
-    member(MaxScore-RecIDSelected, DescendingMatches),
+    % Remove duplicatas mantendo a ordem
+    list_to_set(DescendingMatches, UniqueMatches),
+    member(MaxScore-RecIDSelected, UniqueMatches),
     book(RecIDSelected, RecommendedTitle).
 
 % 2. Filtragem Personalizada por Perfil de Usuário

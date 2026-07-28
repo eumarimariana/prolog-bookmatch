@@ -16,6 +16,32 @@ export async function recommendForUserProfile(userId: string, genres: string[], 
   return res.json();
 }
 
+export async function saveUserProfile(profileData: any) {
+  const res = await fetch(`${API_URL}/profiles/user_profiles`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(profileData)
+  });
+  if (!res.ok) throw new Error("Erro ao salvar perfil");
+  return res.json();
+}
+
+export async function getUserProfile(userId: string) {
+  const res = await fetch(`${API_URL}/profiles/user_profiles/${userId}`);
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function addFavoriteBook(userId: string, bookId: string) {
+  const res = await fetch(`${API_URL}/profiles/user_library`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: userId, book_id: bookId })
+  });
+  if (!res.ok) throw new Error("Erro ao adicionar favorito");
+  return res.json();
+}
+
 export async function recommendByScore(referenceTitle: string) {
   const res = await fetch(`${API_URL}/recommend/score`, {
     method: "POST",
