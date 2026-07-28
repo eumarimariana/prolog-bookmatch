@@ -1,5 +1,4 @@
-# BookMatch AI 📚✨
-
+# BookMatch
 **BookMatch** é uma plataforma moderna e inteligente de recomendação de livros. Diferente de sistemas tradicionais baseados apenas em Machine Learning, o BookMatch utiliza um motor de inferência **Simbólico (IA Clássica)** alimentado por **Prolog**. Isso permite criar um modelo de recomendações de altíssima precisão, combinando pesos, tropos, gêneros e regras matemáticas lógicas de maneira *Explicável* (Explainable AI - XAI).
 
 O projeto é dividido em três camadas principais:
@@ -10,7 +9,7 @@ O projeto é dividido em três camadas principais:
 
 ---
 
-## 🏗️ Arquitetura e Fluxo do Sistema (UML)
+## Arquitetura e Fluxo do Sistema (UML)
 
 O fluxo principal da aplicação baseia-se na retroalimentação de fatos dinâmicos. Quando um usuário favoritar um livro no Frontend, o Backend injeta esse dado no Motor Prolog (SWI) em tempo real, recalculando toda a árvore de recomendações.
 
@@ -43,7 +42,7 @@ sequenceDiagram
 
 ---
 
-## 🚀 Funcionalidades Principais
+## Funcionalidades Principais
 
 - **Intelligent Scoring (Prolog):** Avalia a similaridade entre livros calculando distâncias semânticas baseadas em Gêneros (peso alto) e Tropos (peso médio).
 - **Tradução de Intenção (Chat):** O bot interpreta inputs naturais, traduzindo gírias e jargões literários brasileiros ("enemies to lovers", "romance clichê") para tags exatas do banco de dados em inglês, para garantir consultas precisas no Prolog.
@@ -64,4 +63,3 @@ prolog-bookmatch/
 > **Nota:** Para documentações específicas de como configurar as variáveis de ambiente, dependências (requirements.txt, package.json) ou rotas HTTP, consulte os arquivos `README.md` de cada subdiretório.
 
 ---
-*Construído com Inteligência Simbólica e Design Vibrante.* 🔮
