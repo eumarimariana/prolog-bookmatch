@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { searchOpenLibrary, importBookToProlog, recommendAdvanced, API_URL } from './api';
 import { Search as SearchIcon, Loader2, PlusCircle, CheckCircle2 } from 'lucide-react';
 import { supabase } from './lib/supabase';
@@ -9,10 +9,18 @@ export default function Search() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [importingState, setImportingState] = useState<Record<string, 'importing' | 'done' | 'error'>>({});
-  const [filterMode, setFilterMode] = useState<'openlibrary' | 'prolog' | 'openlibrary_rec'>('openlibrary');
+  const [filterMode, setFilterMode] = useState<'openlibrary' | 'prolog'>('openlibrary');
   const [genreFilter, setGenreFilter] = useState('');
   const [tropeFilter, setTropeFilter] = useState('');
-  const [prologResults, setPrologResults] = useState<string[]>([]);
+  const [prologResults, setPrologResults] = useState<{title: string, cover_url?: string}[]>([]);
+
+  useEffect(() => {
+    setResults([]);
+    setPrologResults([]);
+    setQuery('');
+    setGenreFilter('');
+    setTropeFilter('');
+  }, [filterMode]);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -45,30 +53,6 @@ export default function Search() {
         }
         setResults(fetchedBooks);
         setPrologResults([]);
-      } else if (filterMode === 'openlibrary_rec') {
-        const combinedQuery = `${query} ${genreFilter} ${tropeFilter}`.trim();
-        const data = await searchOpenLibrary(combinedQuery);
-        const fetchedBooks = data.books || [];
-
-        if (fetchedBooks.length > 0) {
-          const titles = fetchedBooks.map((b: any) => b.title);
-          const { data: existingBooks } = await supabase.from('books').select('title').in('title', titles);
-
-          if (existingBooks && existingBooks.length > 0) {
-            const existingTitles = existingBooks.map((b: any) => b.title);
-            const newImportState: Record<string, 'importing' | 'done' | 'error'> = {};
-            fetchedBooks.forEach((b: any) => {
-              if (existingTitles.includes(b.title)) {
-                newImportState[b.open_library_key] = 'done';
-              }
-            });
-            setImportingState(newImportState);
-          } else {
-            setImportingState({});
-          }
-        }
-        setResults(fetchedBooks);
-        setPrologResults([]);
       } else {
         // Prolog Filter Mode
         const res = await fetch(`${API_URL}/recommend/advanced`, {
@@ -82,7 +66,20 @@ export default function Search() {
         });
         if (res.ok) {
           const data = await res.json();
-          setPrologResults(data.recommendations || []);
+          const titles = data.recommendations || [];
+          
+          if (titles.length > 0) {
+            // Fetch covers from Supabase
+            const { data: dbBooks } = await supabase.from('books').select('title, cover_url').in('title', titles);
+            
+            const richRecs = titles.map((t: string) => {
+              const match = dbBooks?.find(b => b.title === t);
+              return { title: t, cover_url: match?.cover_url };
+            });
+            setPrologResults(richRecs);
+          } else {
+            setPrologResults([]);
+          }
         }
         setResults([]);
       }
@@ -126,19 +123,13 @@ export default function Search() {
             onClick={() => setFilterMode('openlibrary')}
             style={{ padding: '8px 16px', borderRadius: '99px', border: 'none', background: filterMode === 'openlibrary' ? 'var(--accent-purple)' : '#F9F8F6', color: filterMode === 'openlibrary' ? 'white' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600 }}
           >
-            Pesquisa Livre (Global)
-          </button>
-          <button 
-            onClick={() => setFilterMode('openlibrary_rec')}
-            style={{ padding: '8px 16px', borderRadius: '99px', border: 'none', background: filterMode === 'openlibrary_rec' ? 'var(--accent-purple)' : '#F9F8F6', color: filterMode === 'openlibrary_rec' ? 'white' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600 }}
-          >
-            Recomendações API (Global)
+            Pesquisa Livre (Catálogo Global)
           </button>
           <button 
             onClick={() => setFilterMode('prolog')}
             style={{ padding: '8px 16px', borderRadius: '99px', border: 'none', background: filterMode === 'prolog' ? 'var(--accent-purple)' : '#F9F8F6', color: filterMode === 'prolog' ? 'white' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600 }}
           >
-            Recomendações Banco de Dados (Regras Prolog)
+            Recomendações Inteligentes (Motor Prolog)
           </button>
         </div>
 
@@ -158,7 +149,7 @@ export default function Search() {
             )}
           </div>
           
-          {(filterMode === 'prolog' || filterMode === 'openlibrary_rec') && (
+          {filterMode === 'prolog' && (
             <div style={{ display: 'flex', gap: '10px' }}>
               <input 
                 type="text" 
@@ -184,11 +175,17 @@ export default function Search() {
 
       {prologResults.length > 0 && (
         <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          {prologResults.map((title, i) => (
-            <Link to={`/book/${encodeURIComponent(title)}`} key={i} style={{ textDecoration: 'none' }}>
-              <div style={{ padding: '20px', background: '#F9F8F6', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', border: '1px solid #EBE5DF' }}>
-                <div style={{ width: '40px', height: '40px', background: 'var(--accent-purple)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>📚</div>
-                <h3 style={{ fontSize: '1.2rem', margin: 0, color: 'var(--text-dark)' }}>{title}</h3>
+          {prologResults.map((r, i) => (
+            <Link to={`/book/${encodeURIComponent(r.title)}`} key={i} style={{ textDecoration: 'none' }}>
+              <div style={{ padding: '20px', background: '#F9F8F6', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', border: '1px solid #EBE5DF', transition: 'transform 0.2s' }}>
+                {r.cover_url ? (
+                  <div style={{ width: '50px', height: '75px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                    <img src={r.cover_url} alt={r.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ) : (
+                  <div style={{ width: '50px', height: '75px', background: 'var(--accent-purple)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>📚</div>
+                )}
+                <h3 style={{ fontSize: '1.2rem', margin: 0, color: 'var(--text-dark)' }}>{r.title}</h3>
               </div>
             </Link>
           ))}

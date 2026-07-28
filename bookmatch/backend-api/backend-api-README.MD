@@ -139,10 +139,5 @@ Recebe o DTO de um livro, salva na base de dados (Supabase) e injeta **dinamicam
 ### Integração Open Library (Legalidade & Caching)
 O serviço (`open_library_service.py`) utiliza os endpoints abertos da Open Library de forma responsável (sem necessidade de API Key). Capas são puxadas por ID e ISBN, em conformidade com as regras de uso não comercial da Open Library.
 
-## Testando a lógica Prolog isoladamente
-
-Sem precisar subir a API ou configurar o Supabase, dá pra testar as regras direto:
-
-```bash
-python test_inference.py
-```
+### Tradutor de Intenção (NLP / Translation Mapping)
+O endpoint `/recommend/advanced` inclui um dicionário interno para mapear inputs em português (como `fantasia`, `romance`, `enemies to lovers`) e perguntas naturais de chat (`"Quero um romance clichê"`) para as tags em inglês correspondentes (`fantasy`, `contemporary`) inseridas no banco de dados e indexadas no Prolog.

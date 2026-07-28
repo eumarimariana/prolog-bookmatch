@@ -69,7 +69,23 @@ async def get_advanced_recommendation(req: AdvancedRecommendationRequest):
         "mitologia grega ou deuses": ["mythology", "greek", "gods", "percy jackson"]
     }
 
+    # Translation dictionary for common Portuguese terms
+    TRANSLATOR = {
+        "fantasia": "fantasy",
+        "romance": "romance",
+        "ficção": "fiction",
+        "ficção científica": "science fiction",
+        "misterio": "mystery",
+        "mistério": "mystery",
+        "terror": "horror",
+        "aventura": "adventure",
+        "enemies to lovers": "enemies to lovers",
+        "eminies to lovers": "enemies to lovers" # common typo
+    }
+
     tropes_to_check = list((req.moods or []) + (req.themes or []))
+    tropes_to_check = [TRANSLATOR.get(t.lower(), t) for t in tropes_to_check]
+
     if req.prompt:
         lower_prompt = req.prompt.strip().lower()
         if lower_prompt in PROMPT_MAPPING:
@@ -94,7 +110,8 @@ async def get_advanced_recommendation(req: AdvancedRecommendationRequest):
 
     # 2. Busca por gênero explícito se especificado
     if req.genre:
-        safe_genre = escape_prolog_string(req.genre.lower())
+        mapped_genre = TRANSLATOR.get(req.genre.strip().lower(), req.genre.strip().lower())
+        safe_genre = escape_prolog_string(mapped_genre)
         query = f"recommend_by_genre('{safe_genre}', Title)"
         try:
             query_obj = prolog.query(query, maxresult=10)
