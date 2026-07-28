@@ -4,7 +4,7 @@ import { recommendByScore, addFavoriteBook, getUserProfile } from './api';
 import { ArrowLeft, Target, BookOpen, Calculator, Loader2, CheckCircle2, Heart } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
-const MOCK_USER_ID = '11111111-1111-1111-1111-111111111111';
+const MOCK_USER_ID = 'mari_profile_1';
 
 export default function BookDetails() {
   const { title } = useParams();
@@ -18,6 +18,8 @@ export default function BookDetails() {
     async function loadData() {
       if (!title) return;
       setLoading(true);
+      setAdded(false);
+      window.scrollTo(0, 0);
       try {
         // 1. Busca os detalhes do livro aberto no Supabase
         const decodedTitle = decodeURIComponent(title);

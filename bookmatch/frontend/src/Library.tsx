@@ -4,7 +4,7 @@ import { supabase } from './lib/supabase';
 import { recommendForUserProfile, saveUserProfile, getUserProfile } from './api';
 import { Link } from 'react-router-dom';
 
-const MOCK_USER_ID = '11111111-1111-1111-1111-111111111111';
+const MOCK_USER_ID = 'mari_profile_1';
 
 export default function Library() {
   const [name, setName] = useState('');
@@ -14,7 +14,7 @@ export default function Library() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [favoriteBooksDetails, setFavoriteBooksDetails] = useState<any[]>([]);
-  const [recommendations, setRecommendations] = useState<string[]>([]);
+  const [recommendations, setRecommendations] = useState<{title: string, cover_url?: string}[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [prologBooks, setPrologBooks] = useState<any[]>([]);
 
@@ -52,7 +52,20 @@ export default function Library() {
     setLoadingRecs(true);
     try {
        const data = await recommendForUserProfile(MOCK_USER_ID, g, t, r);
-       setRecommendations(data.recommendations || []);
+       const titles = data.recommendations || [];
+       
+       if (titles.length > 0) {
+         // Fetch covers from Supabase
+         const { data: dbBooks } = await supabase.from('books').select('title, cover_url').in('title', titles);
+         
+         const richRecs = titles.map((titleStr: string) => {
+           const match = dbBooks?.find(b => b.title === titleStr);
+           return { title: titleStr, cover_url: match?.cover_url };
+         });
+         setRecommendations(richRecs);
+       } else {
+         setRecommendations([]);
+       }
     } catch (err) {
        console.error("Erro ao buscar recomendações IA:", err);
     } finally {
@@ -203,13 +216,21 @@ export default function Library() {
           </div>
         ) : recommendations.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            {recommendations.map((title, idx) => (
-              <div key={idx} style={{ padding: '20px', background: '#F9F8F6', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div style={{ width: '40px', height: '40px', background: 'var(--accent-purple)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                  <BookOpen size={20} />
+            {recommendations.map((rec, idx) => (
+              <Link to={`/book/${encodeURIComponent(rec.title)}`} key={idx} style={{ textDecoration: 'none' }}>
+                <div style={{ padding: '20px', background: '#F9F8F6', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '15px', border: '1px solid #EBE5DF', transition: 'transform 0.2s', cursor: 'pointer' }}>
+                  {rec.cover_url ? (
+                    <div style={{ width: '50px', height: '75px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                      <img src={rec.cover_url} alt={rec.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  ) : (
+                    <div style={{ width: '50px', height: '75px', background: 'var(--accent-purple)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
+                      <BookOpen size={20} />
+                    </div>
+                  )}
+                  <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--text-dark)' }}>{rec.title}</h3>
                 </div>
-                <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--text-dark)' }}>{title}</h3>
-              </div>
+              </Link>
             ))}
           </div>
         ) : (

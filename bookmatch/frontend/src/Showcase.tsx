@@ -4,7 +4,7 @@ import { searchOpenLibrary, importBookToProlog } from './api';
 import { supabase } from './lib/supabase';
 import { ChevronLeft, BookmarkPlus, BookmarkCheck, Loader2 } from 'lucide-react';
 
-const MOCK_USER_ID = '11111111-1111-1111-1111-111111111111';
+const MOCK_USER_ID = 'mari_profile_1';
 
 export default function Showcase() {
   const { genre } = useParams();

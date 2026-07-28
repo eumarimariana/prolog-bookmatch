@@ -4,7 +4,7 @@ import { supabase } from './lib/supabase';
 import { Search, Bookmark, ChevronLeft, ChevronRight, Eye, BookmarkPlus, BookmarkCheck, Library, Smartphone, Sparkles, Crown, Headphones, Rocket, Heart, Flame, Ghost, ShieldAlert, Puzzle, Landmark, Telescope, Loader2 } from 'lucide-react';
 import { searchOpenLibrary, importBookToProlog } from './api';
 
-const MOCK_USER_ID = '11111111-1111-1111-1111-111111111111';
+const MOCK_USER_ID = 'mari_profile_1';
 
 export default function Home() {
   const [defaultShelf, setDefaultShelf] = useState<any[]>([]);

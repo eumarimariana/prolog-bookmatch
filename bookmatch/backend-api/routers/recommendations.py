@@ -6,6 +6,20 @@ from schemas import (
 )
 from prolog_services import prolog, escape_prolog_string
 
+# Translation dictionary for common Portuguese terms
+TRANSLATOR = {
+    "fantasia": "fantasy",
+    "romance": "romance",
+    "ficção": "fiction",
+    "ficção científica": "science fiction",
+    "misterio": "mystery",
+    "mistério": "mystery",
+    "terror": "horror",
+    "aventura": "adventure",
+    "enemies to lovers": "enemies to lovers",
+    "eminies to lovers": "enemies to lovers" # common typo
+}
+
 router = APIRouter(prefix="/recommend", tags=["recommendations"])
 
 
@@ -67,20 +81,6 @@ async def get_advanced_recommendation(req: AdvancedRecommendationRequest):
         "distopia futurista": ["dystopia", "dystopian", "future", "post-apocalyptic"],
         "um livro que se passa na escola": ["school", "high school", "young adult", "college"],
         "mitologia grega ou deuses": ["mythology", "greek", "gods", "percy jackson"]
-    }
-
-    # Translation dictionary for common Portuguese terms
-    TRANSLATOR = {
-        "fantasia": "fantasy",
-        "romance": "romance",
-        "ficção": "fiction",
-        "ficção científica": "science fiction",
-        "misterio": "mystery",
-        "mistério": "mystery",
-        "terror": "horror",
-        "aventura": "adventure",
-        "enemies to lovers": "enemies to lovers",
-        "eminies to lovers": "enemies to lovers" # common typo
     }
 
     tropes_to_check = list((req.moods or []) + (req.themes or []))
@@ -161,11 +161,14 @@ async def get_recommendation_for_user(req: UserProfileRequest):
     
     try:
         for g in req.liked_genres:
-            prolog.assertz(f"user_likes_genre('{user_id}', '{escape_prolog_string(g.lower())}')")
+            mapped_g = TRANSLATOR.get(g.strip().lower(), g.strip().lower())
+            prolog.assertz(f"user_likes_genre('{user_id}', '{escape_prolog_string(mapped_g)}')")
         for t in req.liked_tropes:
-            prolog.assertz(f"user_likes_trope('{user_id}', '{escape_prolog_string(t.lower())}')")
+            mapped_t = TRANSLATOR.get(t.strip().lower(), t.strip().lower())
+            prolog.assertz(f"user_likes_trope('{user_id}', '{escape_prolog_string(mapped_t)}')")
         for dt in req.disliked_tropes:
-            prolog.assertz(f"user_dislikes_trope('{user_id}', '{escape_prolog_string(dt.lower())}')")
+            mapped_dt = TRANSLATOR.get(dt.strip().lower(), dt.strip().lower())
+            prolog.assertz(f"user_dislikes_trope('{user_id}', '{escape_prolog_string(mapped_dt)}')")
         for b in req.read_books:
             prolog.assertz(f"user_read('{user_id}', '{escape_prolog_string(b)}')")
             
